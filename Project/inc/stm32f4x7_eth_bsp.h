@@ -33,33 +33,10 @@
  extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
-// #if defined (USE_STM324xG_EVAL)
-//   #include "stm324xg_eval.h"
-//   #include "stm324xg_eval_lcd.h"
-
-// #elif defined (USE_STM324x7I_EVAL) 
-//   #include "stm324x7i_eval.h"
-//   #include "stm324x7i_eval_lcd.h"
-
-// #else
-//  #error "Please select first the Evaluation board used in your application (in Project Options)"
-// #endif
-
+#include "stm32f4xx.h"
 #include "netif.h"
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
-#define DP83848_PHY_ADDRESS       0x01 /* Relative to STM324xG-EVAL Board */
-
-/* Specific defines for EXTI line, used to manage Ethernet link status */
-#define ETH_LINK_EXTI_LINE             EXTI_Line14
-#define ETH_LINK_EXTI_PORT_SOURCE      EXTI_PortSourceGPIOB
-#define ETH_LINK_EXTI_PIN_SOURCE       EXTI_PinSource14
-#define ETH_LINK_EXTI_IRQn             EXTI15_10_IRQn 
-/* PB14 */
-#define ETH_LINK_PIN                   GPIO_Pin_14
-#define ETH_LINK_GPIO_PORT             GPIOB
-#define ETH_LINK_GPIO_CLK              RCC_AHB1Periph_GPIOB
 
 /* Ethernet Flags for EthStatus variable */
 #define ETH_INIT_FLAG           0x01 /* Ethernet Init Flag */

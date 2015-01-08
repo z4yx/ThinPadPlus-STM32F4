@@ -1,6 +1,8 @@
 #ifndef __SYSTICK_H
 #define	__SYSTICK_H
 
+#include <stdint.h>
+
 typedef uint64_t SysTick_t;
 
 void SysTick_Init(void);

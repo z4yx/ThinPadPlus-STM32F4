@@ -34,7 +34,8 @@
 #include "netif/etharp.h"
 #include "lwip/dhcp.h"
 #include "ethernetif.h"
-#include "main.h"
+#include "config.h"
+#include "stm32f4x7_eth_bsp.h"
 #include "netconf.h"
 #include "common.h"
 #include <stdio.h>

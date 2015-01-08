@@ -28,6 +28,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4x7_eth.h"
 #include "netconf.h"
+#include "stm32f4x7_eth_bsp.h"
 #include "main.h"
 #include "tcp_echoserver.h"
 #include "serial_debug.h"
@@ -37,16 +38,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-
-/*--------------- LCD Messages ---------------*/
-#if defined (STM32F40XX)
-#define MESSAGE1   "    STM32F40/41x     "
-#elif defined (STM32F427X)
-#define MESSAGE1   "     STM32F427x      "
-#endif
-#define MESSAGE2   "  STM32F-4 Series   "
-#define MESSAGE3   " TCP echoserver Demo"
-#define MESSAGE4   "                    "
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
