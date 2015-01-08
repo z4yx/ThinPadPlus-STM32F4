@@ -17,6 +17,7 @@
  */
 
 #include "usart.h"
+#include "common.h"
 #include <stdarg.h>
 
 /*
@@ -40,7 +41,6 @@ void USART_Config(USART_TypeDef* USARTx, u32 USART_BaudRate)
             PinSource_Rx = GPIO_PinSource10;
             GPIO_AF  = GPIO_AF_USART1;
             RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
-            RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
             break;
         case (u32)USART2:
             USART_GPIO = GPIOA;
@@ -50,7 +50,6 @@ void USART_Config(USART_TypeDef* USARTx, u32 USART_BaudRate)
             PinSource_Rx = GPIO_PinSource3;
             GPIO_AF  = GPIO_AF_USART2;
             RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
-            RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
             break;
         case (u32)USART3:
             USART_GPIO = GPIOB;
@@ -60,13 +59,13 @@ void USART_Config(USART_TypeDef* USARTx, u32 USART_BaudRate)
             PinSource_Rx = GPIO_PinSource11;
             GPIO_AF  = GPIO_AF_USART3;
             RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
-            RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
             break;
 
         default:
             return;
     }
 
+    RCC_GPIOClockCmd(USART_GPIO, ENABLE);
     GPIO_PinAFConfig(USART_GPIO, PinSource_Rx, GPIO_AF);
     GPIO_PinAFConfig(USART_GPIO, PinSource_Tx, GPIO_AF);
 
@@ -82,11 +81,10 @@ void USART_Config(USART_TypeDef* USARTx, u32 USART_BaudRate)
 
     /* Configure USART Rx as input*/
     GPIO_InitStructure.GPIO_Pin = USART_Rx;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
     GPIO_Init(USART_GPIO, &GPIO_InitStructure);
 
     /* USART mode config */
-    USART_InitStructure.USART_BaudRate = 115200;
+    USART_InitStructure.USART_BaudRate = USART_BaudRate;
     USART_InitStructure.USART_WordLength = USART_WordLength_8b;
     USART_InitStructure.USART_StopBits = USART_StopBits_1;
     USART_InitStructure.USART_Parity = USART_Parity_No;
