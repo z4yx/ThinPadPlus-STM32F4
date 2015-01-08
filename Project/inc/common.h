@@ -20,11 +20,12 @@
 
 #include "stm32f4xx.h"
 #include <stdint.h>
+#include <stdio.h>
 
 
-#define DBG_MSG(format, ...) USART_printf(Debug_USART, "[Debug]%s: " format "\r\n", __func__, ##__VA_ARGS__)
-#define ERR_MSG(format, ...) USART_printf(Debug_USART, "[Error]%s: " format "\r\n", __func__, ##__VA_ARGS__)
-#define REPORT(info_type, format, ...) USART_printf(BT_USART, "!I#%s#" format "\r\n", info_type, ##__VA_ARGS__)
+#define DBG_MSG(format, ...) printf("[Debug]%s: " format "\r\n", __func__, ##__VA_ARGS__)
+#define INFO_MSG(format, ...) printf("[Info]%s: " format "\r\n", __func__, ##__VA_ARGS__)
+#define ERR_MSG(format, ...) printf("[Error]%s: " format "\r\n", __func__, ##__VA_ARGS__)
 
 void RCC_GPIOClockCmd(GPIO_TypeDef* GPIOx, FunctionalState state);
 

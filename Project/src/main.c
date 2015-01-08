@@ -31,7 +31,7 @@
 #include "main.h"
 #include "tcp_echoserver.h"
 #include "serial_debug.h"
-#include "usart.h"
+#include "common.h"
 #include <stdio.h>
 
 /* Private typedef -----------------------------------------------------------*/
@@ -78,13 +78,7 @@ int main(void)
   DebugComPort_Init();  
 #endif
 
-  printf("%s\n", "   \r\nStarted");
-  USART_putchar(USART1, '@');
-  USART_putchar(USART1, '@');
-  USART_putchar(USART1, '@');
-  USART_putchar(USART1, '@');
-  USART_putchar(USART1, '@');
-  USART_putchar(USART1, '@');
+  printf("   %s\r\n", "System Started");
 
   /*Initialize LCD and Leds */ 
   LCD_LED_Init();

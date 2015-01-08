@@ -46,6 +46,7 @@
 #ifdef SERIAL_DEBUG
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+#if 0
 #ifdef __GNUC__
   /* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
      set to 'Yes') calls __io_putchar() */
@@ -53,6 +54,7 @@
 #else
   #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #endif /* __GNUC__ */
+#endif
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -84,6 +86,7 @@ void DebugComPort_Init(void)
   * @param  None
   * @retval None
   */
+#if 0
 PUTCHAR_PROTOTYPE
 {
   /* Place your implementation of fputc here */
@@ -91,6 +94,37 @@ PUTCHAR_PROTOTYPE
 
   return ch;
 }
+#endif
+
+/* Retargeting functions for gcc-arm-embedded */
+
+int _write (int fd, char *ptr, int len)
+{
+  /* Write "len" of char from "ptr" to file id "fd"
+   * Return number of char written.
+   * Need implementing with UART here. */
+  int i;
+  for (i = 0; i < len; ++i)
+  {
+    _ttywrch(ptr[i]);
+  }
+  return len;
+}
+
+int _read (int fd, char *ptr, int len)
+{
+  /* Read "len" of char to "ptr" from file id "fd"
+   * Return number of char read.
+   * Need implementing with UART here. */
+  return len;
+}
+
+void _ttywrch(int ch) {
+  /* Write one char "ch" to the default console
+   * Need implementing with UART here. */
+  USART_putchar(USART1, ch);
+}
+
 #endif /* SERIAL_DEBUG */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

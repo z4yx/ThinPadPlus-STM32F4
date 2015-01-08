@@ -225,6 +225,11 @@ CFLAGS += -Wall -Wimplicit
 # CFLAGS += -Wcast-align
 CFLAGS += -Wpointer-arith -Wswitch
 CFLAGS += -Wredundant-decls -Wreturn-type -Wshadow -Wunused
+
+# Need following option for LTO as LTO will treat retarget functions as
+# unused without following option
+CFLAGS += -fno-builtin
+
 # CFLAGS += -Wa,-adhlns=$(subst $(suffix $<),.lst,$<) 
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 
@@ -267,7 +272,7 @@ MATH_LIB = -lm
 #    --cref:    add cross reference to  map file
 LDFLAGS = -Wl,-Map=$(TARGET).map -Wl,-cref -Wl,--gc-sections
 LDFLAGS += $(MATH_LIB)
-LDFLAGS += --specs=nosys.specs
+LDFLAGS += --specs=nano.specs --specs=nosys.specs
 LDFLAGS += $(patsubst %,-L%,$(EXTRA_LIBDIRS))
 LDFLAGS += $(patsubst %,-l%,$(EXTRA_LIBS))
 
