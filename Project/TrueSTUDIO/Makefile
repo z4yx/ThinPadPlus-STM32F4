@@ -347,6 +347,9 @@ all: begin gccversion sizebefore build sizeafter finished end
 flash: all
 	st-flash --reset write $(TARGET).bin 0x08000000
 
+dfu: all
+	dfu-util -a 0 -d 0483:df11 -s 0x08000000 -D main.bin
+
 ifeq ($(FORMAT),ihex)
 build: elf hex
 hex: $(TARGET).hex
