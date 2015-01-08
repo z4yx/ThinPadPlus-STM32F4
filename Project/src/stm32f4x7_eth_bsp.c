@@ -29,6 +29,7 @@
 #include "lwip/opt.h"
 #include "stm32f4x7_eth.h"
 #include "stm32f4x7_eth_bsp.h"
+#include "common.h"
 #include "main.h"
 #include "netif.h"
 #include "netconf.h"
@@ -58,25 +59,6 @@ static void ETH_MACDMA_Config(void);
   */
 void ETH_BSP_Config(void)
 {
-  RCC_ClocksTypeDef RCC_Clocks;
-
-  /***************************************************************************
-    NOTE: 
-         When using Systick to manage the delay in Ethernet driver, the Systick
-         must be configured before Ethernet initialization and, the interrupt 
-         priority should be the highest one.
-  *****************************************************************************/
-  
-  /* Configure Systick clock source as HCLK */
-  SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK);
-
-  /* SystTick configuration: an interrupt every 10ms */
-  RCC_GetClocksFreq(&RCC_Clocks);
-  SysTick_Config(RCC_Clocks.HCLK_Frequency / 100);
-  
-  /* Set Systick interrupt priority to 0*/
-  NVIC_SetPriority (SysTick_IRQn, 0);
-
   /* Configure the GPIO ports for ethernet pins */
   ETH_GPIO_Config();
   
@@ -384,18 +366,8 @@ void ETH_link_callback(struct netif *netif)
   struct ip_addr gw;
 #ifndef USE_DHCP
   uint8_t iptab[4] = {0};
-  uint8_t iptxt[20];
 #endif /* USE_DHCP */
 
-#ifdef USE_LCD
-  /* Clear LCD */
-  LCD_ClearLine(Line4);
-  LCD_ClearLine(Line5);
-  LCD_ClearLine(Line6);
-  LCD_ClearLine(Line7);
-  LCD_ClearLine(Line8);
-  LCD_ClearLine(Line9);
-#endif
 
   if(netif_is_link_up(netif))
   {
@@ -478,32 +450,17 @@ void ETH_link_callback(struct netif *netif)
     /* When the netif is fully configured this function must be called.*/
     netif_set_up(&gnetif);    
 
-#ifdef USE_LCD
-    /* Set the LCD Text Color */
-    LCD_SetTextColor(Green);
-
-    /* Display message on the LCD */
-    LCD_DisplayStringLine(Line5, (uint8_t*)"  Network Cable is  ");
-    LCD_DisplayStringLine(Line6, (uint8_t*)"    now connected   ");
-
-    /* Set the LCD Text Color */
-    LCD_SetTextColor(White);
+    INFO_MSG("%s", "Network Cable is now connected.");
 
   #ifndef USE_DHCP
+
     /* Display static IP address */
     iptab[0] = IP_ADDR3;
     iptab[1] = IP_ADDR2;
     iptab[2] = IP_ADDR1;
     iptab[3] = IP_ADDR0;
-    sprintf((char*)iptxt, "  %d.%d.%d.%d", iptab[3], iptab[2], iptab[1], iptab[0]);
-    LCD_DisplayStringLine(Line8, (uint8_t*)"  Static IP address   ");
-    LCD_DisplayStringLine(Line9, iptxt);
-
-    /* Clear LCD */
-    LCD_ClearLine(Line5);
-    LCD_ClearLine(Line6);
+    INFO_MSG("Static IP address %d.%d.%d.%d", iptab[3], iptab[2], iptab[1], iptab[0]);
   #endif /* USE_DHCP */
-#endif /* USE_LCD */
   }
   else
   {
@@ -515,17 +472,8 @@ void ETH_link_callback(struct netif *netif)
 
     /*  When the netif link is down this function must be called.*/
     netif_set_down(&gnetif);
-#ifdef USE_LCD
-    /* Set the LCD Text Color */
-    LCD_SetTextColor(Red);
 
-    /* Display message on the LCD */
-    LCD_DisplayStringLine(Line5, (uint8_t*)"  Network Cable is  ");
-    LCD_DisplayStringLine(Line6, (uint8_t*)"     unplugged   ");
-
-    /* Set the LCD Text Color */
-    LCD_SetTextColor(White);
-#endif /* USE_LCD */
+    INFO_MSG("%s", "Network Cable is unplugged.");
   }
 }
 

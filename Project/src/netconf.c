@@ -36,6 +36,7 @@
 #include "ethernetif.h"
 #include "main.h"
 #include "netconf.h"
+#include "common.h"
 #include <stdio.h>
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,13 +46,13 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 struct netif gnetif;
-uint32_t TCPTimer = 0;
-uint32_t ARPTimer = 0;
+SysTick_t TCPTimer = 0;
+SysTick_t ARPTimer = 0;
 uint32_t IPaddress = 0;
 
 #ifdef USE_DHCP
-uint32_t DHCPfineTimer = 0;
-uint32_t DHCPcoarseTimer = 0;
+SysTick_t DHCPfineTimer = 0;
+SysTick_t DHCPcoarseTimer = 0;
 __IO uint8_t DHCP_state;
 #endif
 extern __IO uint32_t  EthStatus;
@@ -116,18 +117,14 @@ void LwIP_Init(void)
 #ifdef USE_DHCP
     DHCP_state = DHCP_START;
 #else
-#ifdef USE_LCD
 
     iptab[0] = IP_ADDR3;
     iptab[1] = IP_ADDR2;
     iptab[2] = IP_ADDR1;
     iptab[3] = IP_ADDR0;
 
-    sprintf((char*)iptxt, "  %d.%d.%d.%d", iptab[3], iptab[2], iptab[1], iptab[0]); 
+    INFO_MSG("Static IP address %d.%d.%d.%d", iptab[3], iptab[2], iptab[1], iptab[0]);
 
-    LCD_DisplayStringLine(Line8, (uint8_t*)"  Static IP address   ");
-    LCD_DisplayStringLine(Line9, iptxt);
-#endif
 #endif /* USE_DHCP */
   }
   else
@@ -137,17 +134,7 @@ void LwIP_Init(void)
 #ifdef USE_DHCP
     DHCP_state = DHCP_LINK_DOWN;
 #endif /* USE_DHCP */
-#ifdef USE_LCD
-    /* Set the LCD Text Color */
-    LCD_SetTextColor(Red);
-
-    /* Display message on the LCD */
-    LCD_DisplayStringLine(Line5, (uint8_t*)"  Network Cable is  ");
-    LCD_DisplayStringLine(Line6, (uint8_t*)"    not connected   ");
-
-    /* Set the LCD Text Color */
-    LCD_SetTextColor(White);
-#endif
+    INFO_MSG("%s", "Network Cable is not connected.");
   }
 
   /* Set the link callback function, this function is called on change of link status*/
@@ -170,7 +157,7 @@ void LwIP_Pkt_Handle(void)
 * @param  localtime the current LocalTime value
 * @retval None
 */
-void LwIP_Periodic_Handle(__IO uint32_t localtime)
+void LwIP_Periodic_Handle(__IO SysTick_t localtime)
 {
 #if LWIP_TCP
   /* TCP periodic process every 250 ms */
@@ -239,11 +226,7 @@ void LwIP_DHCP_Process_Handle()
       /* IP address should be set to 0 
          every time we want to assign a new DHCP address */
       IPaddress = 0;
-#ifdef USE_LCD
-      LCD_DisplayStringLine(Line4, (uint8_t*)"     Looking for    ");
-      LCD_DisplayStringLine(Line5, (uint8_t*)"     DHCP server    ");
-      LCD_DisplayStringLine(Line6, (uint8_t*)"     please wait... ");
-#endif
+      INFO_MSG("%s", "Looking for DHCP server please wait...");
     }
     break;
 
@@ -259,23 +242,12 @@ void LwIP_DHCP_Process_Handle()
         /* Stop DHCP */
         dhcp_stop(&gnetif);
 
-#ifdef USE_LCD      
         iptab[0] = (uint8_t)(IPaddress >> 24);
         iptab[1] = (uint8_t)(IPaddress >> 16);
         iptab[2] = (uint8_t)(IPaddress >> 8);
         iptab[3] = (uint8_t)(IPaddress);
-        
-        sprintf((char*)iptxt, " %d.%d.%d.%d", iptab[3], iptab[2], iptab[1], iptab[0]);
-        
-        LCD_ClearLine(Line4);
-        LCD_ClearLine(Line5);
-        LCD_ClearLine(Line6);
 
-        /* Display the IP address */
-        LCD_DisplayStringLine(Line7, (uint8_t*)"IP address assigned ");
-        LCD_DisplayStringLine(Line8, (uint8_t*)"  by a DHCP server  ");
-        LCD_DisplayStringLine(Line9, iptxt);
-#endif
+        INFO_MSG("IP address assigned by a DHCP server. %d.%d.%d.%d", iptab[3], iptab[2], iptab[1], iptab[0]);
         // STM_EVAL_LEDOn(LED1);
       }
       else
@@ -294,8 +266,6 @@ void LwIP_DHCP_Process_Handle()
           IP4_ADDR(&gw, GW_ADDR0, GW_ADDR1, GW_ADDR2, GW_ADDR3);
           netif_set_addr(&gnetif, &ipaddr , &netmask, &gw);
 
-#ifdef USE_LCD   
-          LCD_DisplayStringLine(Line7, (uint8_t*)"    DHCP timeout    ");
 
           iptab[0] = IP_ADDR3;
           iptab[1] = IP_ADDR2;
@@ -304,13 +274,7 @@ void LwIP_DHCP_Process_Handle()
 
           sprintf((char*)iptxt, "  %d.%d.%d.%d", iptab[3], iptab[2], iptab[1], iptab[0]);
 
-          LCD_ClearLine(Line4);
-          LCD_ClearLine(Line5);
-          LCD_ClearLine(Line6);
-
-          LCD_DisplayStringLine(Line8, (uint8_t*)"  Static IP address   ");
-          LCD_DisplayStringLine(Line9, iptxt);
-#endif
+          INFO_MSG("DHCP timeout. Static IP address %d.%d.%d.%d", iptab[3], iptab[2], iptab[1], iptab[0]);
           // STM_EVAL_LEDOn(LED1);
         }
       }

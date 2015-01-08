@@ -43,7 +43,6 @@
 #include "usart.h"
 #include <stdio.h>
 
-#ifdef SERIAL_DEBUG
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #if 0
@@ -125,6 +124,5 @@ void _ttywrch(int ch) {
   USART_putchar(USART1, ch);
 }
 
-#endif /* SERIAL_DEBUG */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

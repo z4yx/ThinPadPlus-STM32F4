@@ -38,9 +38,7 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-#ifdef SERIAL_DEBUG
-  void DebugComPort_Init(void);
-#endif
+void DebugComPort_Init(void);
 
 #endif /* __SERIAL_DEBUG_H */  
 

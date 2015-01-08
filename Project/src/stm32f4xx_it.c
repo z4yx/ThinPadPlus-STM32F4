@@ -121,7 +121,7 @@ void DebugMon_Handler(void)
 void SysTick_Handler(void)
 {
   /* Update the LocalTime by adding SYSTEMTICK_PERIOD_MS each SysTick interrupt */
-  Time_Update();
+  IncSysTickCounter();
 }
 
 /**

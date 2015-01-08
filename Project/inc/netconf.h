@@ -30,6 +30,7 @@
 #ifndef __NETCONF_H
 #define __NETCONF_H
 
+#include "systick.h"
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -46,7 +47,7 @@
 /* Exported functions ------------------------------------------------------- */
 void LwIP_Init(void);
 void LwIP_Pkt_Handle(void);
-void LwIP_Periodic_Handle(__IO uint32_t localtime);
+void LwIP_Periodic_Handle(__IO SysTick_t localtime);
 
 #ifdef __cplusplus
 }

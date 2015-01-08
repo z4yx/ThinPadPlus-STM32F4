@@ -32,11 +32,11 @@
 #include "tcp_echoserver.h"
 #include "serial_debug.h"
 #include "common.h"
+#include "systick.h"
 #include <stdio.h>
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define SYSTEMTICK_PERIOD_MS  10
 
 /*--------------- LCD Messages ---------------*/
 #if defined (STM32F40XX)
@@ -50,13 +50,31 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-__IO uint32_t LocalTime = 0; /* this variable is used to create a time reference incremented by 10ms */
-uint32_t timingdelay;
 
 /* Private function prototypes -----------------------------------------------*/
-void LCD_LED_Init(void);
 
 /* Private functions ---------------------------------------------------------*/
+
+
+static void CoreInit(void)
+{
+  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+  SysTick_Init();
+  DebugComPort_Init();  
+}
+
+static void PeriphInit(void)
+{
+  /* configure ethernet (GPIOs, clocks, MAC, DMA) */
+  ETH_BSP_Config();
+
+  /* Initilaize the LwIP stack */
+  LwIP_Init();
+  
+  /* tcp echo server Init */
+  tcp_echoserver_init();
+
+}
 
 /**
   * @brief  Main program.
@@ -71,26 +89,11 @@ int main(void)
        To reconfigure the default setting of SystemInit() function, refer to
        system_stm32f4xx.c file
      */
-
-  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
-
-#ifdef SERIAL_DEBUG
-  DebugComPort_Init();  
-#endif
+  CoreInit();
 
   printf("   %s\r\n", "System Started");
 
-  /*Initialize LCD and Leds */ 
-  LCD_LED_Init();
-  
-  /* configure ethernet (GPIOs, clocks, MAC, DMA) */
-  ETH_BSP_Config();
-
-  /* Initilaize the LwIP stack */
-  LwIP_Init();
-  
-  /* tcp echo server Init */
-  tcp_echoserver_init();
+  PeriphInit();
    
   /* Infinite loop */
   while (1)
@@ -102,74 +105,8 @@ int main(void)
       LwIP_Pkt_Handle();
     }
     /* handle periodic timers for LwIP*/
-    LwIP_Periodic_Handle(LocalTime);
+    LwIP_Periodic_Handle(GetSystemTick());
   } 
-}
-
-/**
-  * @brief  Inserts a delay time.
-  * @param  nCount: number of 10ms periods to wait for.
-  * @retval None
-  */
-void Delay(uint32_t nCount)
-{
-  /* Capture the current local time */
-  timingdelay = LocalTime + nCount;  
-
-  /* wait until the desired delay finish */  
-  while(timingdelay > LocalTime)
-  {     
-  }
-}
-
-/**
-  * @brief  Updates the system local time
-  * @param  None
-  * @retval None
-  */
-void Time_Update(void)
-{
-  LocalTime += SYSTEMTICK_PERIOD_MS;
-}
-
-/**
-  * @brief  Initializes the STM324xG-EVAL's LCD and LEDs resources.
-  * @param  None
-  * @retval None
-  */
-void LCD_LED_Init(void)
-{
-#ifdef USE_LCD
-  /* Initialize the STM324xG-EVAL's LCD */
-  STM324xG_LCD_Init();
-
-  /* Initialize STM324xG-EVAL's LEDs */
-  STM_EVAL_LEDInit(LED1);
-  STM_EVAL_LEDInit(LED2);
-  STM_EVAL_LEDInit(LED3);
-  STM_EVAL_LEDInit(LED4);
-
-  /* Leds on */
-  STM_EVAL_LEDOn(LED1);
-  STM_EVAL_LEDOn(LED2);
-  STM_EVAL_LEDOn(LED3);
-  STM_EVAL_LEDOn(LED4);
-
-  /* Clear the LCD */
-  LCD_Clear(Black);
-
-  /* Set the LCD Back Color */
-  LCD_SetBackColor(Black);
-
-  /* Set the LCD Text Color */
-  LCD_SetTextColor(White);
-
-  /* Display message on the LCD*/
-  LCD_DisplayStringLine(Line0, (uint8_t*)MESSAGE1);
-  LCD_DisplayStringLine(Line1, (uint8_t*)MESSAGE2);
-  LCD_DisplayStringLine(Line2, (uint8_t*)MESSAGE3);
-  LCD_DisplayStringLine(Line3, (uint8_t*)MESSAGE4);
-#endif
 }
 
 #ifdef  USE_FULL_ASSERT
@@ -186,6 +123,7 @@ void assert_failed(uint8_t* file, uint32_t line)
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 
+  printf("Assertion Failed: file %s on line %d\r\n", file, line);
   /* Infinite loop */
   while (1)
   {}
