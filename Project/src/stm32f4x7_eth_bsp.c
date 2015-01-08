@@ -231,18 +231,26 @@ void ETH_GPIO_Config(void)
   GPIO_PinAFConfig(GPIOA, GPIO_PinSource2, GPIO_AF_ETH);
   GPIO_PinAFConfig(GPIOA, GPIO_PinSource7, GPIO_AF_ETH);
 
+#ifdef MII_MODE
   /* Configure PB5 and PB8 */
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5 | GPIO_Pin_8;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
   GPIO_PinAFConfig(GPIOB, GPIO_PinSource5, GPIO_AF_ETH);
   GPIO_PinAFConfig(GPIOB, GPIO_PinSource8, GPIO_AF_ETH);
+#endif
 
   /* Configure PC1, PC2, PC3, PC4 and PC5 */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | 
+#ifdef MII_MODE
+    GPIO_Pin_2 | GPIO_Pin_3 | 
+#endif
+    GPIO_Pin_4 | GPIO_Pin_5;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
   GPIO_PinAFConfig(GPIOC, GPIO_PinSource1, GPIO_AF_ETH);
+#ifdef MII_MODE
   GPIO_PinAFConfig(GPIOC, GPIO_PinSource2, GPIO_AF_ETH);
   GPIO_PinAFConfig(GPIOC, GPIO_PinSource3, GPIO_AF_ETH);
+#endif
   GPIO_PinAFConfig(GPIOC, GPIO_PinSource4, GPIO_AF_ETH);
   GPIO_PinAFConfig(GPIOC, GPIO_PinSource5, GPIO_AF_ETH);
 
@@ -253,6 +261,7 @@ void ETH_GPIO_Config(void)
   GPIO_PinAFConfig(GPIOG, GPIO_PinSource13, GPIO_AF_ETH);
   GPIO_PinAFConfig(GPIOG, GPIO_PinSource14, GPIO_AF_ETH);
 
+#ifdef MII_MODE
   /* Configure PH2, PH3, PH6, PH7 */
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_6 | GPIO_Pin_7;
   GPIO_Init(GPIOH, &GPIO_InitStructure);
@@ -265,6 +274,7 @@ void ETH_GPIO_Config(void)
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
   GPIO_Init(GPIOI, &GPIO_InitStructure);
   GPIO_PinAFConfig(GPIOI, GPIO_PinSource10, GPIO_AF_ETH);
+#endif
 }
 
 /**
