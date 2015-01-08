@@ -199,7 +199,7 @@ void LwIP_Periodic_Handle(__IO uint32_t localtime)
           (DHCP_state != DHCP_LINK_DOWN))
     { 
       /* toggle LED1 to indicate DHCP on-going process */
-      STM_EVAL_LEDToggle(LED1);
+      // STM_EVAL_LEDToggle(LED1);
 
       /* process DHCP state machine */
       LwIP_DHCP_Process_Handle();    
@@ -276,7 +276,7 @@ void LwIP_DHCP_Process_Handle()
         LCD_DisplayStringLine(Line8, (uint8_t*)"  by a DHCP server  ");
         LCD_DisplayStringLine(Line9, iptxt);
 #endif
-        STM_EVAL_LEDOn(LED1);
+        // STM_EVAL_LEDOn(LED1);
       }
       else
       {
@@ -311,7 +311,7 @@ void LwIP_DHCP_Process_Handle()
           LCD_DisplayStringLine(Line8, (uint8_t*)"  Static IP address   ");
           LCD_DisplayStringLine(Line9, iptxt);
 #endif
-          STM_EVAL_LEDOn(LED1);
+          // STM_EVAL_LEDOn(LED1);
         }
       }
     }
