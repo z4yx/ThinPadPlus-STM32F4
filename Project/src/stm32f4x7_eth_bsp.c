@@ -93,7 +93,7 @@ void ETH_BSP_Config(void)
   Eth_Link_PHYITConfig(DP83848_PHY_ADDRESS);
 
   /* Configure the EXTI for Ethernet link status. */
-  Eth_Link_EXTIConfig(); 
+  // Eth_Link_EXTIConfig(); 
 }
 
 /**
