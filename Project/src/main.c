@@ -30,7 +30,7 @@
 #include "netconf.h"
 #include "stm32f4x7_eth_bsp.h"
 #include "main.h"
-#include "tcp_echoserver.h"
+#include "httpd.h"
 #include "serial_debug.h"
 #include "common.h"
 #include "systick.h"
@@ -62,8 +62,8 @@ static void PeriphInit(void)
   /* Initilaize the LwIP stack */
   LwIP_Init();
   
-  /* tcp echo server Init */
-  tcp_echoserver_init();
+  /* Http webserver Init */
+  httpd_init();
 
 }
 

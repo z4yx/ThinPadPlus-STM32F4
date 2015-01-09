@@ -40,3 +40,30 @@
     +  JP8    |          Open                           |  Close                               +
     +==========================================================================================+
   */
+
+/* M25P FLASH SPI Interface pins  */  
+#define sFLASH_SPI                           SPI2
+#define sFLASH_SPI_CLK                       RCC_APB1Periph_SPI2
+#define sFLASH_SPI_CLK_INIT                  RCC_APB1PeriphClockCmd
+
+#define sFLASH_SPI_SCK_PIN                   GPIO_Pin_1
+#define sFLASH_SPI_SCK_GPIO_PORT             GPIOI
+#define sFLASH_SPI_SCK_GPIO_CLK              RCC_AHB1Periph_GPIOI
+#define sFLASH_SPI_SCK_SOURCE                GPIO_PinSource1
+#define sFLASH_SPI_SCK_AF                    GPIO_AF_SPI2
+
+#define sFLASH_SPI_MISO_PIN                  GPIO_Pin_2
+#define sFLASH_SPI_MISO_GPIO_PORT            GPIOI
+#define sFLASH_SPI_MISO_GPIO_CLK             RCC_AHB1Periph_GPIOI
+#define sFLASH_SPI_MISO_SOURCE               GPIO_PinSource2
+#define sFLASH_SPI_MISO_AF                   GPIO_AF_SPI2
+
+#define sFLASH_SPI_MOSI_PIN                  GPIO_Pin_3
+#define sFLASH_SPI_MOSI_GPIO_PORT            GPIOI
+#define sFLASH_SPI_MOSI_GPIO_CLK             RCC_AHB1Periph_GPIOI
+#define sFLASH_SPI_MOSI_SOURCE               GPIO_PinSource3
+#define sFLASH_SPI_MOSI_AF                   GPIO_AF_SPI2
+
+#define sFLASH_CS_PIN                        GPIO_Pin_0
+#define sFLASH_CS_GPIO_PORT                  GPIOI
+#define sFLASH_CS_GPIO_CLK                   RCC_AHB1Periph_GPIOI
