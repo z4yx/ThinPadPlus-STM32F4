@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- **/
+ */
 #ifndef __FSDATA_H__
 #define __FSDATA_H__
 
