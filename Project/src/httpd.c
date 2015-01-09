@@ -2166,7 +2166,10 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
     hs->handle = file;
     hs->file = (char*)file->data;
     LWIP_ASSERT("File length must be positive!", (file->len >= 0));
-    hs->left = file->len;
+    if (file->is_custom_file == 0)
+      hs->left = file->len;
+    else 
+      hs->left = 0;
     hs->retries = 0;
 #if LWIP_HTTPD_TIMING
     hs->time_started = sys_now();
