@@ -26,6 +26,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+#include "ff.h"
 #include "stm32f4x7_eth.h"
 #include "netconf.h"
 #include "stm32f4x7_eth_bsp.h"
@@ -34,6 +35,7 @@
 #include "serial_debug.h"
 #include "common.h"
 #include "systick.h"
+#include "filesystem.h"
 #include <stdio.h>
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,11 +63,15 @@ static void PeriphInit(void)
 
   /* Initilaize the LwIP stack */
   LwIP_Init();
+
+  FileSystem_Init();
   
   /* Http webserver Init */
   httpd_init();
 
+  tcp_echoserver_init();
 }
+
 
 /**
   * @brief  Main program.

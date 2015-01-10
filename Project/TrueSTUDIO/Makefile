@@ -97,6 +97,8 @@ SRC += $(wildcard $(SRC_DIR)../Utilities/Third_Party/lwip-1.4.1/src/core/*.c)
 SRC += $(wildcard $(SRC_DIR)../Utilities/Third_Party/lwip-1.4.1/src/core/ipv4/*.c)
 SRC += $(wildcard $(SRC_DIR)../Utilities/Third_Party/lwip-1.4.1/src/netif/*.c)
 SRC += $(wildcard $(SRC_DIR)../Utilities/Third_Party/lwip-1.4.1/src/api/*.c)
+SRC += $(wildcard $(SRC_DIR)../Utilities/Third_Party/FatFs_R0.10c/*.c)
+SRC += $(wildcard $(SRC_DIR)../Utilities/Third_Party/FatFs_R0.10c/option/unicode.c)
 
 # List C source files here which must be compiled in ARM-Mode.
 # use file-extension c for "c-only"-files
@@ -162,6 +164,7 @@ EXTRAINCDIRS += $(SRC_DIR)../Utilities/Third_Party/lwip-1.4.1/src/include/ipv4
 EXTRAINCDIRS += $(SRC_DIR)../Utilities/Third_Party/lwip-1.4.1/src/include
 EXTRAINCDIRS += $(SRC_DIR)../Utilities/Third_Party/lwip-1.4.1/port/STM32F4x7
 EXTRAINCDIRS += $(SRC_DIR)../Utilities/Third_Party/lwip-1.4.1/port/STM32F4x7/Standalone
+EXTRAINCDIRS += $(SRC_DIR)../Utilities/Third_Party/FatFs_R0.10c
 
 # List any extra directories to look for library files here.
 #     Each directory must be seperated by a space.
