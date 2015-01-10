@@ -9,8 +9,12 @@
 static FIL opened_files[16];
 static uint16_t is_used;
 
+#define MAX_URI_SIZE 256
+
 static void* current_post_conn;
 static FIL   current_post_file;
+static char  current_post_uri[MAX_URI_SIZE];
+static uint8_t current_post_is_opened;
 
 int fs_open_custom(struct fs_file *file, const char *name)
 {
@@ -106,12 +110,11 @@ err_t httpd_post_begin(void *connection, const char *uri, const char *http_reque
         strncpy(response_uri, "/404.html", response_uri_len);
         return ERR_VAL;
     }
-    res = f_open(&current_post_file, uri+1, FA_WRITE | FA_CREATE_ALWAYS);
-    if(res == FR_OK){
-        current_post_conn = connection;
-        return ERR_OK;
-    }
-    return ERR_VAL;
+    strncpy(current_post_uri, uri, MAX_URI_SIZE);
+    current_post_conn = connection;
+    current_post_is_opened = 0;
+    *post_auto_wnd = 0;
+    return ERR_OK;
 }
 
 /** Called for each pbuf of data that has been received for a POST.
@@ -129,12 +132,24 @@ err_t httpd_post_receive_data(void *connection, struct pbuf *p)
     if(current_post_conn != connection){
         return ERR_VAL;
     }
+    FRESULT res;
+    if(!current_post_is_opened){
+        DBG_MSG("Opening %s for writing", current_post_uri);
+        res = f_open(&current_post_file, current_post_uri, FA_WRITE | FA_CREATE_ALWAYS);
+        if(res != FR_OK){
+            return ERR_VAL;
+        }
+        current_post_is_opened = 1;
+    }
+    uint16_t length = p->tot_len;
     while(p){
         UINT cnt;
         DBG_MSG("payload len=%d", p->len);
         f_write(&current_post_file, p->payload, p->len, &cnt);
         p = p->next;
     }
+    DBG_MSG("call httpd_post_data_recved(%d)", length);
+    httpd_post_data_recved(connection, length);
     return ERR_OK;
 }
 
