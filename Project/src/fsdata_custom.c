@@ -28,16 +28,12 @@ int fs_open_custom(struct fs_file *file, const char *name)
         if(!(is_used&(1<<i))){
             res = f_stat(name, &fno);
             if(res == FR_OK){
-                DBG_MSG("File found len=%d", fno.fsize);
                 if(fno.fsize == 0)
                     return 0;
-                DBG_MSG("before f_open");
                 res = f_open(&opened_files[i], name, FA_READ);
-                DBG_MSG("f_open returned %d", res);
                 if(res == FR_OK){
                     is_used |= (1<<i);
 
-                    DBG_MSG("opened_files %d is used", i);
                     file->data = NULL;
                     file->index = 0;
                     file->http_header_included = 0;
@@ -57,7 +53,6 @@ void fs_close_custom(struct fs_file *file)
     if(!file->pextension)
         return;
     int i = (int)file->pextension - 1;
-    DBG_MSG("closing file %d", i);
     f_close(&opened_files[i]);
     is_used ^= (1<<i);
 }
@@ -66,14 +61,12 @@ int fs_read_custom(struct fs_file *file, char *buffer, int count)
 {
     UINT cnt;
 
-    DBG_MSG("index=%d count=%d", file->index, count);
     if(!file->pextension)
         return FS_READ_EOF;
     if(file->index >= file->len) {
         return FS_READ_EOF;
     }
     int i = (int)file->pextension - 1;
-    DBG_MSG("reading file %d", i);
     f_read(&opened_files[i], buffer, count, &cnt);
     file->index += cnt;
     return cnt;
@@ -104,8 +97,6 @@ err_t httpd_post_begin(void *connection, const char *uri, const char *http_reque
 {
     FRESULT res;
 
-    DBG_MSG("connection=%u uri=%s content_len=%d",
-        connection, uri, content_len);
     if(current_post_conn != NULL){
         strncpy(response_uri, "/404.html", response_uri_len);
         return ERR_VAL;
@@ -127,8 +118,6 @@ err_t httpd_post_begin(void *connection, const char *uri, const char *http_reque
  */
 err_t httpd_post_receive_data(void *connection, struct pbuf *p)
 {
-    DBG_MSG("connection=%u",
-        connection);
     if(current_post_conn != connection){
         return ERR_VAL;
     }
@@ -144,7 +133,6 @@ err_t httpd_post_receive_data(void *connection, struct pbuf *p)
     uint16_t length = p->tot_len;
     while(p){
         UINT cnt;
-        DBG_MSG("payload len=%d", p->len);
         f_write(&current_post_file, p->payload, p->len, &cnt);
         p = p->next;
     }
@@ -164,9 +152,8 @@ err_t httpd_post_receive_data(void *connection, struct pbuf *p)
  */
 void httpd_post_finished(void *connection, char *response_uri, u16_t response_uri_len)
 {
-    DBG_MSG("connection=%u",
-        connection);
     if(current_post_conn == connection){
+        INFO_MSG("Done");
         f_close(&current_post_file);
         current_post_conn = NULL;
     }

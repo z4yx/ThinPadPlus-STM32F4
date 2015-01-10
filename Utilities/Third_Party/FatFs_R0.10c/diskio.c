@@ -73,13 +73,11 @@ DRESULT disk_read (
 )
 {
 
-	DBG_MSG("sector=%d count=%d", sector, count);
 
 	switch (pdrv) {
 	case SPI :
 		sFLASH_ReadBuffer(buff, sector*sFLASH_SPI_SECTORSIZE, count*sFLASH_SPI_SECTORSIZE);
 
-		DBG_MSG("finished");
 		return RES_OK;
 	}
 
@@ -102,7 +100,6 @@ DRESULT disk_write (
 {
 	int i;
 
-	DBG_MSG("sector=%d count=%d", sector, count);
 
 	switch (pdrv) {
 	case SPI :
@@ -112,7 +109,6 @@ DRESULT disk_write (
 		}
 		sFLASH_WriteBuffer(buff, sector*sFLASH_SPI_SECTORSIZE, count*sFLASH_SPI_SECTORSIZE);
 
-		DBG_MSG("finished");
 		return RES_OK;
 	}
 
