@@ -269,30 +269,14 @@ static const unsigned char data__index_html[] = {
 
 
 
-const struct fsdata_file file__img_sics_gif[] = { {
-file_NULL,
-data__img_sics_gif,
-data__img_sics_gif + 16,
-sizeof(data__img_sics_gif) - 16,
-1,
-}};
-
 const struct fsdata_file file__404_html[] = { {
-file__img_sics_gif,
+file_NULL,
 data__404_html,
 data__404_html + 12,
 sizeof(data__404_html) - 12,
 1,
 }};
 
-const struct fsdata_file file__index_html[] = { {
-file__404_html,
-data__index_html,
-data__index_html + 12,
-sizeof(data__index_html) - 12,
-1,
-}};
-
-#define FS_ROOT file__index_html
-#define FS_NUMFILES 3
+#define FS_ROOT file__404_html
+#define FS_NUMFILES 1
 

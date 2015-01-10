@@ -243,8 +243,6 @@ CONLYFLAGS += $(CSTANDARD)
 ifneq ($(AT91LIBNOWARN),yes)
 #AT91-lib warnings with:
 CFLAGS += -Wcast-qual
-CONLYFLAGS += -Wmissing-prototypes 
-CONLYFLAGS += -Wstrict-prototypes
 CONLYFLAGS += -Wmissing-declarations
 endif
 
