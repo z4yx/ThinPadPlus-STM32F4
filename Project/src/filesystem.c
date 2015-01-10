@@ -4,10 +4,10 @@
 #include "common.h"
 
 static char test_buffer[sFLASH_SPI_SECTORSIZE];
+static FATFS fs; //fs object must be kept, because buffer inside will be used in further operation
 
 void FileSystem_Init()
 {
-  FATFS fs;
 
   DBG_MSG("Try to mount...");
   f_mount(&fs, "", 0);
