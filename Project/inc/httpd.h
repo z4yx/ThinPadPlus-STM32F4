@@ -40,10 +40,6 @@
 #include "lwip/err.h"
 #include "lwip/pbuf.h"
 
-#define LWIP_HTTPD_CGI             1
-#define LWIP_HTTPD_DYNAMIC_HEADERS 1
-#define LWIP_HTTPD_SUPPORT_POST    1
-
 
 /** Set this to 1 to support CGI */
 #ifndef LWIP_HTTPD_CGI

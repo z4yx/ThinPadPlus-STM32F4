@@ -1,5 +1,6 @@
 #include "ff.h"
 #include "fs.h"
+#include "httpd.h"
 #include "lwip/pbuf.h"
 #include "common.h"
 #include <string.h>

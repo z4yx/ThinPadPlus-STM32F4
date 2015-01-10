@@ -35,9 +35,6 @@
 #include "lwip/opt.h"
 #include "lwip/err.h"
 
-#define LWIP_HTTPD_DYNAMIC_FILE_READ  1
-#define LWIP_HTTPD_CUSTOM_FILES       1
-
 /** Set this to 1 and provide the functions:
  * - "int fs_open_custom(struct fs_file *file, const char *name)"
  *    Called first for every opened file to allow opening files

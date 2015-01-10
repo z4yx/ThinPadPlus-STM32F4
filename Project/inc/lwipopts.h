@@ -29,6 +29,14 @@
 
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
+  
+
+#define LWIP_HTTPD_CGI             1
+#define LWIP_HTTPD_DYNAMIC_HEADERS 1
+#define LWIP_HTTPD_SUPPORT_POST    1
+
+#define LWIP_HTTPD_DYNAMIC_FILE_READ  1
+#define LWIP_HTTPD_CUSTOM_FILES       1
 
 /**
  * SYS_LIGHTWEIGHT_PROT==1: if you want inter-task protection for certain
