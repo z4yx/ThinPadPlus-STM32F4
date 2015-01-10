@@ -37,7 +37,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-tSSIHandler ADC_Page_SSI_Handler;
 uint32_t ADC_not_configured=1;
 
 /* we will use character "t" as tag for CGI */
@@ -102,49 +101,6 @@ static void ADC_Configuration(void)
 }
 
 /**
-  * @brief  ADC_Handler : SSI handler for ADC page 
-  */
-u16_t ADC_Handler(int iIndex, char *pcInsert, int iInsertLen)
-{
-  /* We have only one SSI handler iIndex = 0 */
-  if (iIndex ==0)
-  {  
-    char Digit1=0, Digit2=0, Digit3=0, Digit4=0; 
-    uint32_t ADCVal = 0;        
-
-     /* configure ADC if not yet configured */
-     if (ADC_not_configured ==1)       
-     {
-        ADC_Configuration();
-        ADC_not_configured=0;
-     }
-     
-     /* get ADC conversion value */
-     ADCVal = ADC_GetConversionValue(ADC3);
-     
-     /* convert to Voltage,  step = 0.8 mV */
-     ADCVal = (uint32_t)(ADCVal * 0.8);  
-     
-     /* get digits to display */
-     
-     Digit1= ADCVal/1000;
-     Digit2= (ADCVal-(Digit1*1000))/100 ;
-     Digit3= (ADCVal-((Digit1*1000)+(Digit2*100)))/10;
-     Digit4= ADCVal -((Digit1*1000)+(Digit2*100)+ (Digit3*10));
-        
-     /* prepare data to be inserted in html */
-     *pcInsert       = (char)(Digit1+0x30);
-     *(pcInsert + 1) = (char)(Digit2+0x30);
-     *(pcInsert + 2) = (char)(Digit3+0x30);
-     *(pcInsert + 3) = (char)(Digit4+0x30);
-    
-    /* 4 characters need to be inserted in html*/
-    return 4;
-  }
-  return 0;
-}
-
-/**
   * @brief  CGI handler for LEDs control 
   */
 const char * LEDS_CGI_Handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
@@ -188,14 +144,6 @@ const char * LEDS_CGI_Handler(int iIndex, int iNumParams, char *pcParam[], char 
   return "/STM32F4x7LED.html";  
 }
 
-/**
- * Initialize SSI handlers
- */
-void httpd_ssi_init(void)
-{  
-  /* configure SSI handlers (ADC page SSI) */
-  http_set_ssi_handler(ADC_Handler, (char const **)TAGS, 1);
-}
 
 /**
  * Initialize CGI handlers
