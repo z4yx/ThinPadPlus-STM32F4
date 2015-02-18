@@ -37,6 +37,7 @@
 #include "HTTPServer.h"
 #include "HTTPRestHandler.h"
 #include "HTTPWebSocketHandler.h"
+#include "HTTPFileWriting.h"
 #include "HTTPFS.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -78,6 +79,7 @@ static void ServerInit(void)
 {
   httpd.addHandler(new HTTPRestHandler("/io"));
   httpd.addHandler(new HTTPWebSocketHandler("/ws"));
+  httpd.addHandler(new HTTPFileWritingHandler("/config/", "/"));
   httpd.addHandler(new HTTPFileSystemHandler("/", "/"));
   httpd.bind();
 }
