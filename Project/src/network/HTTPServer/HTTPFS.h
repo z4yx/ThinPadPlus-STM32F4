@@ -3,6 +3,7 @@
 
 
 #include "HTTPServer.h"
+#include "ff.h"
 
 #define HTTP_BUFFER_SIZE 700
 #define FILENAMELANGTH 100
@@ -18,14 +19,11 @@ class HTTPFileSystemData : public HTTPData {
     int fleft;
     int bleft;
     int offset;
-    FILE *file;
+    FIL file;
     char buffer[HTTP_BUFFER_SIZE];
     
     virtual ~HTTPFileSystemData() {
-      if(file) {
-        fclose(file);
-        file = 0;
-      }
+      f_close(&file);
     }
 };
 
@@ -59,14 +57,14 @@ class HTTPFileSystemHandler : public HTTPHandler {
       
       printf("filename: %s\n", filename);
       
-      data->file = fopen(filename, "r");
-      if(!data->file) {
+      if(FR_OK!=f_open(&data->file, filename, FA_READ|FA_OPEN_EXISTING)) {
         delete data;
         return HTTP_NotFound;
       }
-      data->fleft  = fleft(data->file);
+      data->fleft  = fleft(&data->file);
       data->bleft  = 0;
       data->offset = 0;
+      printf("file opend size=%u\r\n", data->fleft);
       
       con->data = data;
       con->setLength(data->fleft);
@@ -108,12 +106,9 @@ class HTTPFileSystemHandler : public HTTPHandler {
      * @param fd The filehandler of which we want to know the filesize.
      * @return The filesize of fd.
      */
-    long fleft(FILE *fd) const {
-      long len, cur;
-      cur = ftell(fd);
-      fseek(fd, 0, SEEK_END);
-      len = ftell(fd);
-      fseek(fd, cur, SEEK_SET);
+    long fleft(FIL *fd) const {
+      long len;
+      len = f_size(fd);
       return len;
     }
     
@@ -125,15 +120,14 @@ class HTTPFileSystemHandler : public HTTPHandler {
       HTTPFileSystemData *data = static_cast<HTTPFileSystemData *>(con->data);
       if(!data->bleft) {
         if(data->fleft) {
-          int len = fread(&data->buffer[0], sizeof(char), HTTP_BUFFER_SIZE, data->file);
+          unsigned int len;
+          FRESULT fr = f_read(&data->file, &data->buffer[0], HTTP_BUFFER_SIZE, &len);
+          printf("%u bytes read, fr=%d\r\n", len, fr);
           data->fleft -= len;
           data->bleft  = len;
           data->offset = 0;
         } else {
-          if(data->file) {
-            fclose(data->file);
-            data->file = 0;
-          }
+          f_close(&data->file);
           return HTTP_SuccessEnded;
         }
       }
