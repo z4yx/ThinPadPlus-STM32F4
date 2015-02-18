@@ -28,15 +28,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include "ff.h"
 #include "stm32f4x7_eth.h"
-#include "netconf.h"
 #include "stm32f4x7_eth_bsp.h"
 #include "main.h"
-#include "httpd.h"
 #include "serial_debug.h"
 #include "common.h"
 #include "systick.h"
 #include "filesystem.h"
-#include "serial_redirect.h"
 #include "HTTPServer.h"
 #include "HTTPRestHandler.h"
 #include "HTTPWebSocketHandler.h"
@@ -73,15 +70,14 @@ static void PeriphInit(void)
   /* configure ethernet (GPIOs, clocks, MAC, DMA) */
   ETH_BSP_Config();
 
-  /* Initilaize the LwIP stack */
-  // LwIP_Init();
-
   FileSystem_Init();
-  
-  /* Http webserver Init */
-  // httpd_init();
+}
 
-  // tcp_echoserver_init();
+static void ServerInit(void)
+{
+  httpd.addHandler(new HTTPRestHandler("/io"));
+  httpd.addHandler(new HTTPWebSocketHandler("/ws"));
+  httpd.bind();
 }
 
 static void ThinpadInit(void)
@@ -111,9 +107,7 @@ int main(void)
 
   ThinpadInit();
 
-  httpd.addHandler(new HTTPRestHandler("/io"));
-  httpd.addHandler(new HTTPWebSocketHandler("/ws"));
-  httpd.bind();
+  ServerInit();
 
   INFO_MSG("Initialization Done");
 
