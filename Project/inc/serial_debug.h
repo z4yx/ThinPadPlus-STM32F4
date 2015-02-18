@@ -31,12 +31,20 @@
 #ifndef __SERIAL_DEBUG_H
 #define __SERIAL_DEBUG_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* Includes ------------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 void DebugComPort_Init(void);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif /* __SERIAL_DEBUG_H */  
 

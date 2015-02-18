@@ -344,11 +344,11 @@ void Eth_Link_ITHandler(uint16_t PHYAddress)
   {
     if((ETH_ReadPHYRegister(PHYAddress, PHY_SR) & 1))
     {
-      netif_set_link_up(&gnetif);
+      // netif_set_link_up(&gnetif);
     }
     else
     {
-      netif_set_link_down(&gnetif);
+      // netif_set_link_down(&gnetif);
     }
   }
 }

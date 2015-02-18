@@ -36,18 +36,30 @@
 #include "common.h"
 #include "systick.h"
 #include "filesystem.h"
-#include <stdio.h>
+#include "serial_redirect.h"
+#include "HTTPServer.h"
+#include "HTTPRestHandler.h"
+#include "HTTPWebSocketHandler.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 
 /* Private macro -------------------------------------------------------------*/
+#define IPv4(a,b,c,d) (((d)<<24)|((c)<<16)|((b)<<8)|(a))
 /* Private variables ---------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
 
+HTTPServer httpd /*(
+    "mBed",                 // hostname
+    IPv4(192,168,1,42),    // IP address
+    IPv4(255,255,255,0),    // Netmask
+    IPv4(192,168,1,1),     // Gateway
+    IPv4(192,168,1,1),     // DNS
+    80                      // Port
+)*/;
 
 static void CoreInit(void)
 {
@@ -62,14 +74,19 @@ static void PeriphInit(void)
   ETH_BSP_Config();
 
   /* Initilaize the LwIP stack */
-  LwIP_Init();
+  // LwIP_Init();
 
   FileSystem_Init();
   
   /* Http webserver Init */
-  httpd_init();
+  // httpd_init();
 
-  tcp_echoserver_init();
+  // tcp_echoserver_init();
+}
+
+static void ThinpadInit(void)
+{
+  // SerialRedirect_Init();
 }
 
 
@@ -88,21 +105,22 @@ int main(void)
      */
   CoreInit();
 
-  printf("   %s\r\n", "System Started");
+  printf("     \r\n%s\r\n", "---- System Started ----");
 
   PeriphInit();
-   
+
+  ThinpadInit();
+
+  httpd.addHandler(new HTTPRestHandler("/io"));
+  httpd.addHandler(new HTTPWebSocketHandler("/ws"));
+  httpd.bind();
+
+  INFO_MSG("Initialization Done");
+
   /* Infinite loop */
   while (1)
   {  
-    /* check if any packet received */
-    if (ETH_CheckFrameReceived())
-    { 
-      /* process received ethernet packet*/
-      LwIP_Pkt_Handle();
-    }
-    /* handle periodic timers for LwIP*/
-    LwIP_Periodic_Handle(GetSystemTick());
+    httpd.poll();
   } 
 }
 

@@ -31,6 +31,7 @@
 #include "lwip/tcp.h"
 #include "lwip/tcp_impl.h"
 #include "lwip/udp.h"
+#include "lwip/dns.h"
 #include "netif/etharp.h"
 #include "lwip/dhcp.h"
 #include "ethernetif.h"
@@ -46,9 +47,9 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-struct netif gnetif;
 SysTick_t TCPTimer = 0;
 SysTick_t ARPTimer = 0;
+SysTick_t DNSTimer = 0;
 uint32_t IPaddress = 0;
 
 #ifdef USE_DHCP
@@ -59,13 +60,13 @@ __IO uint8_t DHCP_state;
 extern __IO uint32_t  EthStatus;
 
 /* Private functions ---------------------------------------------------------*/
-void LwIP_DHCP_Process_Handle(void);
+void LwIP_DHCP_Process_Handle(struct netif *pnetif);
 /**
 * @brief  Initializes the lwIP stack
 * @param  None
 * @retval None
 */
-void LwIP_Init(void)
+void LwIP_Init(struct netif *pnetif)
 {
   struct ip_addr ipaddr;
   struct ip_addr netmask;
@@ -103,18 +104,18 @@ void LwIP_Init(void)
 
   The init function pointer must point to a initialization function for
   your ethernet netif interface. The following code illustrates it's use.*/
-  netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &ethernet_input);
+  netif_add(pnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &ethernet_input);
 
   /*  Registers the default network interface.*/
-  netif_set_default(&gnetif);
+  netif_set_default(pnetif);
 
   if (EthStatus == (ETH_INIT_FLAG | ETH_LINK_FLAG))
   { 
     /* Set Ethernet link flag */
-    gnetif.flags |= NETIF_FLAG_LINK_UP;
+    pnetif->flags |= NETIF_FLAG_LINK_UP;
 
     /* When the netif is fully configured this function must be called.*/
-    netif_set_up(&gnetif);
+    netif_set_up(pnetif);
 #ifdef USE_DHCP
     DHCP_state = DHCP_START;
 #else
@@ -131,7 +132,7 @@ void LwIP_Init(void)
   else
   {
     /*  When the netif link is down this function must be called.*/
-    netif_set_down(&gnetif);
+    netif_set_down(pnetif);
 #ifdef USE_DHCP
     DHCP_state = DHCP_LINK_DOWN;
 #endif /* USE_DHCP */
@@ -139,26 +140,16 @@ void LwIP_Init(void)
   }
 
   /* Set the link callback function, this function is called on change of link status*/
-  netif_set_link_callback(&gnetif, ETH_link_callback);
+  netif_set_link_callback(pnetif, ETH_link_callback);
 }
 
-/**
-* @brief  Called when a frame is received
-* @param  None
-* @retval None
-*/
-void LwIP_Pkt_Handle(void)
-{
-  /* Read a received packet from the Ethernet buffers and send it to the lwIP for handling */
-  ethernetif_input(&gnetif);
-}
 
 /**
 * @brief  LwIP periodic tasks
 * @param  localtime the current LocalTime value
 * @retval None
 */
-void LwIP_Periodic_Handle(__IO SysTick_t localtime)
+void LwIP_Periodic_Handle(__IO SysTick_t localtime, struct netif *pnetif)
 {
 #if LWIP_TCP
   /* TCP periodic process every 250 ms */
@@ -175,6 +166,12 @@ void LwIP_Periodic_Handle(__IO SysTick_t localtime)
     ARPTimer =  localtime;
     etharp_tmr();
   }
+
+  if((localtime - DNSTimer) >= DNS_TMR_INTERVAL)
+  {
+    DNSTimer = localtime;
+    dns_tmr();
+  }
   
 #ifdef USE_DHCP
   /* Fine DHCP periodic process every 500ms */
@@ -190,7 +187,7 @@ void LwIP_Periodic_Handle(__IO SysTick_t localtime)
       // STM_EVAL_LEDToggle(LED1);
 
       /* process DHCP state machine */
-      LwIP_DHCP_Process_Handle();    
+      LwIP_DHCP_Process_Handle(pnetif);    
     }
   }
 
@@ -210,7 +207,7 @@ void LwIP_Periodic_Handle(__IO SysTick_t localtime)
 * @param  None
 * @retval None
 */
-void LwIP_DHCP_Process_Handle()
+void LwIP_DHCP_Process_Handle(struct netif *pnetif)
 {
   struct ip_addr ipaddr;
   struct ip_addr netmask;
@@ -223,7 +220,7 @@ void LwIP_DHCP_Process_Handle()
   case DHCP_START:
     {
       DHCP_state = DHCP_WAIT_ADDRESS;
-      dhcp_start(&gnetif);
+      dhcp_start(pnetif);
       /* IP address should be set to 0 
          every time we want to assign a new DHCP address */
       IPaddress = 0;
@@ -234,14 +231,14 @@ void LwIP_DHCP_Process_Handle()
   case DHCP_WAIT_ADDRESS:
     {
       /* Read the new IP address */
-      IPaddress = gnetif.ip_addr.addr;
+      IPaddress = pnetif->ip_addr.addr;
 
       if (IPaddress!=0) 
       {
         DHCP_state = DHCP_ADDRESS_ASSIGNED;	
 
         /* Stop DHCP */
-        dhcp_stop(&gnetif);
+        dhcp_stop(pnetif);
 
         iptab[0] = (uint8_t)(IPaddress >> 24);
         iptab[1] = (uint8_t)(IPaddress >> 16);
@@ -254,18 +251,18 @@ void LwIP_DHCP_Process_Handle()
       else
       {
         /* DHCP timeout */
-        if (gnetif.dhcp->tries > MAX_DHCP_TRIES)
+        if (pnetif->dhcp->tries > MAX_DHCP_TRIES)
         {
           DHCP_state = DHCP_TIMEOUT;
 
           /* Stop DHCP */
-          dhcp_stop(&gnetif);
+          dhcp_stop(pnetif);
 
           /* Static address used */
           IP4_ADDR(&ipaddr, IP_ADDR0 ,IP_ADDR1 , IP_ADDR2 , IP_ADDR3 );
           IP4_ADDR(&netmask, NETMASK_ADDR0, NETMASK_ADDR1, NETMASK_ADDR2, NETMASK_ADDR3);
           IP4_ADDR(&gw, GW_ADDR0, GW_ADDR1, GW_ADDR2, GW_ADDR3);
-          netif_set_addr(&gnetif, &ipaddr , &netmask, &gw);
+          netif_set_addr(pnetif, &ipaddr , &netmask, &gw);
 
 
           iptab[0] = IP_ADDR3;

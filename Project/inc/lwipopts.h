@@ -58,6 +58,9 @@
  */
 #define NO_SYS_NO_TIMERS        1
 
+
+#define LWIP_NETIF_HOSTNAME     1
+
 /* ---------- Memory options ---------- */
 /* MEM_ALIGNMENT: should be set to the alignment of the CPU for which
    lwIP is compiled. 4 byte alignment -> define MEM_ALIGNMENT to 4, 2
@@ -134,6 +137,8 @@ a lot of data that needs to be copied, this should be set high. */
 /* ---------- UDP options ---------- */
 #define LWIP_UDP                1
 #define UDP_TTL                 255
+
+#define LWIP_DNS                        1
 
 
 /* ---------- Statistics options ---------- */

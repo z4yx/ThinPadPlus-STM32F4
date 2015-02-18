@@ -45,9 +45,8 @@
 #define DHCP_LINK_DOWN             5
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-void LwIP_Init(void);
-void LwIP_Pkt_Handle(void);
-void LwIP_Periodic_Handle(__IO SysTick_t localtime);
+void LwIP_Init(struct netif *pnetif);
+void LwIP_Periodic_Handle(__IO SysTick_t localtime, struct netif *pnetif);
 
 #ifdef __cplusplus
 }

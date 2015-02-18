@@ -94,6 +94,7 @@ SRC += $(wildcard $(SRC_DIR)../Libraries/STM32F4x7_ETH_Driver/src/*.c)
 SRC += $(wildcard $(SRC_DIR)/src/*.c)
 SRC += $(wildcard $(SRC_DIR)/src/core/*.c)
 SRC += $(wildcard $(SRC_DIR)/src/server/*.c)
+SRC += $(wildcard $(SRC_DIR)/src/thinpad/*.c)
 SRC += $(wildcard $(SRC_DIR)/src/drivers/*.c)
 SRC += $(wildcard $(SRC_DIR)../Utilities/Third_Party/lwip-1.4.1/port/STM32F4x7/Standalone/*.c)
 SRC += $(wildcard $(SRC_DIR)../Utilities/Third_Party/lwip-1.4.1/src/core/*.c)
@@ -109,7 +110,10 @@ SRCARM  =
 
 # List C++ source files here.
 # use file-extension cpp for C++-files (use extension .cpp)
-CPPSRC = 
+CPPSRC = $(wildcard $(SRC_DIR)/src/*.cpp)
+CPPSRC += $(wildcard $(SRC_DIR)/src/MD5/*.cpp)
+CPPSRC += $(wildcard $(SRC_DIR)/src/network/*.cpp)
+CPPSRC += $(wildcard $(SRC_DIR)/src/network/HTTPServer/*.cpp)
 
 # List C++ source files here which must be compiled in ARM-Mode.
 # use file-extension cpp for C++-files (use extension .cpp)
@@ -158,6 +162,9 @@ LINKERSCRIPTPATH = ./
 #     Each directory must be seperated by a space.
 #EXTRAINCDIRS = ../.. ../../utils ../../lib_src
 EXTRAINCDIRS = $(SRC_DIR)/inc
+EXTRAINCDIRS += $(SRC_DIR)/src/MD5
+EXTRAINCDIRS += $(SRC_DIR)/src/network
+EXTRAINCDIRS += $(SRC_DIR)/src/network/HTTPServer
 EXTRAINCDIRS += $(SRC_DIR)../Libraries/STM32F4xx_StdPeriph_Driver/inc 
 EXTRAINCDIRS += $(SRC_DIR)../Libraries/STM32F4x7_ETH_Driver/inc 
 EXTRAINCDIRS += $(SRC_DIR)../Libraries/CMSIS/Device/ST/STM32F4xx/Include
@@ -226,7 +233,7 @@ CFLAGS += $(CDEFS) $(CINCS)
 CFLAGS += -O$(OPT)
 # CFLAGS += -mfix-cortex-m3-ldrd
 CFLAGS += -ffunction-sections -fdata-sections
-CFLAGS += -Wall -Wimplicit 
+CFLAGS += -Wall
 # disabled here to avoid warning from game-source:
 # CFLAGS += -Wcast-align
 CFLAGS += -Wpointer-arith -Wswitch
@@ -240,7 +247,7 @@ CFLAGS += -fno-builtin
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 
 # flags only for C
-CONLYFLAGS += -Wnested-externs 
+CONLYFLAGS += -Wnested-externs  -Wimplicit 
 CONLYFLAGS += $(CSTANDARD)
 
 ifneq ($(AT91LIBNOWARN),yes)
@@ -277,6 +284,7 @@ MATH_LIB = -lm
 LDFLAGS = -Wl,-Map=$(TARGET).map -Wl,-cref -Wl,--gc-sections
 LDFLAGS += $(MATH_LIB)
 LDFLAGS += --specs=nano.specs --specs=nosys.specs
+LDFLAGS += -lstdc++ -lsupc++
 LDFLAGS += $(patsubst %,-L%,$(EXTRA_LIBDIRS))
 LDFLAGS += $(patsubst %,-l%,$(EXTRA_LIBS))
 
