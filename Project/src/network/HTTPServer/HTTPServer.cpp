@@ -193,7 +193,11 @@ err_t HTTPConnection::recv(struct pbuf *q, err_t err) {
       }
       i = strlen(_request_headerfields) + 120;
       char *buf = new char[i];
-      sprintf(buf, "HTTP/1.1 %d OK\r\nServer: mbed embedded\r\nContent-Length: %d\r\n%s\r\n", 
+      sprintf(buf, "HTTP/1.1 %d OK\r\n"
+        "Server: mbed embedded\r\n"
+        "Content-Length: %d\r\n"
+        "Connection: close\r\n"
+        "%s\r\n", 
             request_status, _request_length, getHeaderFields());
       i = strlen(buf);
       if(sndbuf()>i) {
@@ -201,12 +205,13 @@ err_t HTTPConnection::recv(struct pbuf *q, err_t err) {
           const char *msg = {
             "HTTP/1.1 404 Not Found\r\nServer:mbed embedded\r\n"
             "Content-Type: text/html\r\n"
-            "Content-Length: 163\r\n"
+            "Content-Length: 160\r\n"
+            "Connection: close\r\n"
             "\r\n"
             "<html>\r\n"
-            "<header>\r\n"
-            "<title>File not found<title>\r\n"
-            "</header>\r\n"
+            "<head>\r\n"
+            "<title>File not found</title>\r\n"
+            "</head>\r\n"
             "<body>\r\n"
             "<h1>HTTP 404</h1>\r\n"
             "<p>The file you requested was not found on this mbed. </p>\r\n"
