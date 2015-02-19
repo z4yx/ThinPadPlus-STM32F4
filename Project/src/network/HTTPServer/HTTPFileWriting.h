@@ -45,7 +45,7 @@ class HTTPFileWritingHandler : public HTTPHandler {
       }
       
       con->data = data;
-      con->setLength(0);
+      con->setLength(2);
       return HTTP_OK;
     }
 
@@ -60,8 +60,10 @@ class HTTPFileWritingHandler : public HTTPHandler {
       HTTPFileWritingHandlerData *data = static_cast<HTTPFileWritingHandlerData *>(con->data);
       printf("REST send()\r\n");
 
-      if(data->remain == 0)
+      if(data->remain == 0){
+        con->write((void*)"OK", 2);
         return HTTP_SuccessEnded;
+      }
       else
         return HTTP_Success;
     }
