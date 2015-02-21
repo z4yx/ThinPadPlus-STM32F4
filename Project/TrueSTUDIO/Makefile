@@ -93,6 +93,7 @@ SRC += $(wildcard $(SRC_DIR)../Libraries/STM32F4xx_StdPeriph_Driver/src/*.c)
 SRC += $(wildcard $(SRC_DIR)../Libraries/STM32F4x7_ETH_Driver/src/*.c)
 SRC += $(wildcard $(SRC_DIR)/src/*.c)
 SRC += $(wildcard $(SRC_DIR)/src/core/*.c)
+SRC += $(wildcard $(SRC_DIR)/src/crypto/*.c)
 SRC += $(wildcard $(SRC_DIR)/src/server/*.c)
 SRC += $(wildcard $(SRC_DIR)/src/thinpad/*.c)
 SRC += $(wildcard $(SRC_DIR)/src/drivers/*.c)
@@ -111,7 +112,7 @@ SRCARM  =
 # List C++ source files here.
 # use file-extension cpp for C++-files (use extension .cpp)
 CPPSRC = $(wildcard $(SRC_DIR)/src/*.cpp)
-CPPSRC += $(wildcard $(SRC_DIR)/src/MD5/*.cpp)
+CPPSRC += $(wildcard $(SRC_DIR)/src/crypto/*.cpp)
 CPPSRC += $(wildcard $(SRC_DIR)/src/network/*.cpp)
 CPPSRC += $(wildcard $(SRC_DIR)/src/network/HTTPServer/*.cpp)
 
@@ -162,7 +163,7 @@ LINKERSCRIPTPATH = ./
 #     Each directory must be seperated by a space.
 #EXTRAINCDIRS = ../.. ../../utils ../../lib_src
 EXTRAINCDIRS = $(SRC_DIR)/inc
-EXTRAINCDIRS += $(SRC_DIR)/src/MD5
+EXTRAINCDIRS += $(SRC_DIR)/src/crypto
 EXTRAINCDIRS += $(SRC_DIR)/src/network
 EXTRAINCDIRS += $(SRC_DIR)/src/network/HTTPServer
 EXTRAINCDIRS += $(SRC_DIR)../Libraries/STM32F4xx_StdPeriph_Driver/inc 
