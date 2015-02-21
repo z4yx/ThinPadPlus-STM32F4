@@ -2,6 +2,7 @@
 #define HTTP_WEB_SOCKET_HANDLER_H
 
 #include "HTTPServer.h"
+#include "sha1.h"
 // #include "TemperatureSensor.h"
 // #include "RGBLed.h"
 
@@ -20,27 +21,46 @@ class HTTPWebSocketConnectingState : public HTTPWebSocketState {
 public:
     HTTPWebSocketConnectingState();
     virtual HTTPStatus init(HTTPConnection *conn);
-    virtual HTTPHandle data(HTTPConnection *conn, void *data, int len);
-    virtual HTTPHandle send(HTTPConnection *conn, int maxData);
+    virtual HTTPHandle data(HTTPConnection *conn, void *data, int len) {};
+    virtual HTTPHandle send(HTTPConnection *conn, int maxData) {};
 private:
     // Helper functions
-    uint32_t extractNumber(const char *keyValue);
-    uint32_t countSpaces(const char *keyValue);
-    uint32_t computeKeyPart(const char *keyValue);
     void hexStringToBinary(const char *hex, char *binary);
     
-    uint8_t challange[16];
+    char keyBuffer[64];
+    char acceptKey[32];
+    SHA1Context sha;
 };
 
 // State class for streaming the WebSocket
 class HTTPWebSocketStreamingState : public HTTPWebSocketState {
+private:
+    enum opcode_t
+    {
+        OpCodeContinuation = 0,
+        OpCodeText = 1,
+        OpCodeBin = 2,
+        OpCodeClose = 8,
+        OpCodePing = 9,
+        OpCodePong = 10,
+    };
+    enum state_t
+    {
+        ReadOpCode,
+        ReadLen8,
+        ReadLen16,
+        ReadLen64,
+        ReadMask,
+        ReadPayload,
+    };
+    uint64_t payloadLength, payloadRecved;
+    uint8_t maskingKey[4];
+    uint8_t opcode, readState, readLenCnt;
 public:
-    HTTPWebSocketStreamingState();
+    HTTPWebSocketStreamingState():readState(ReadOpCode){}
     virtual HTTPStatus init(HTTPConnection *conn);
     virtual HTTPHandle data(HTTPConnection *conn, void *data, int len);
     virtual HTTPHandle send(HTTPConnection *conn, int maxData);
-private:
-    int sendCnt;
 };
 
 // HTTP handler for resorces that become WebSockets

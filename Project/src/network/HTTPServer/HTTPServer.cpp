@@ -105,22 +105,6 @@ err_t HTTPConnection::sent(u16_t len) {
 
 err_t HTTPConnection::recv(struct pbuf *q, err_t err) {
 
-    if(webSocket) { // JDL
-        switch(request_handler->data(this, q->payload, q->len)) {
-            case HTTP_SuccessEnded:
-            case HTTP_Failed: {
-                deleteRequest();
-                release_callbacks();
-                NetServer::get()->free(this);
-                close();
-                } break;
-            default:
-            break;
-        }
-        return ERR_OK;
-    }
-
-
   struct pbuf *p = q;
   int i;
   char *data;
@@ -138,7 +122,7 @@ err_t HTTPConnection::recv(struct pbuf *q, err_t err) {
       _request_type = POST;                  // Need :2
     } else if(_request_type&&request_incomplete) {
       getFields(&p, &data); // Need :3
-    } else if(_request_type == POST) {
+    } else if(_request_type == POST || webSocket) {
       // Followup (Data)            // Exits
       data = static_cast<char *>(p->payload);
       store(data, p);
@@ -197,7 +181,7 @@ err_t HTTPConnection::recv(struct pbuf *q, err_t err) {
       sprintf(buf, "HTTP/1.1 %d OK\r\n"
         "Server: mbed embedded\r\n"
         "Content-Length: %d\r\n"
-        "Connection: close\r\n"
+        // "Connection: close\r\n"
         "%s\r\n",
             request_status, _request_length, getHeaderFields());
       i = strlen(buf);
