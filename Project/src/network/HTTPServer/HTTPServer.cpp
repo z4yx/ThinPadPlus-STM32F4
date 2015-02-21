@@ -16,10 +16,10 @@ unsigned int mbed::hash(unsigned char *str) {
 }
 
 HTTPConnection::HTTPConnection(HTTPServer *pparent, struct tcp_pcb *pcb)
-: TCPConnection(pparent, pcb), request_incomplete(true), data(NULL), 
-request_handler(NULL), request_status(HTTP_NotFound), parent(pparent), 
-_request_url(NULL), _request_type(0), _request_headerfields(NULL), 
-_request_length(0), _request_arg_key(NULL), _request_arg_value(NULL), 
+: TCPConnection(pparent, pcb), request_incomplete(true), data(NULL),
+request_handler(NULL), request_status(HTTP_NotFound), parent(pparent),
+_request_url(NULL), _request_type(0), _request_headerfields(NULL),
+_request_length(0), _request_arg_key(NULL), _request_arg_value(NULL),
 _request_arg_state(0), emptypolls(0), webSocket(false) {
   _timeout_max = pparent->timeout();
 }
@@ -44,7 +44,7 @@ void HTTPConnection::addField(char *key, char *value) {
 void HTTPConnection::send() {
   int i = sndbuf();
 
-  if(!request_incomplete&&i) {    
+  if(!request_incomplete&&i) {
     switch(request_handler->send(this, i)) {
       case HTTP_SuccessEnded:
       case HTTP_Failed: {
@@ -95,8 +95,8 @@ void HTTPConnection::err(err_t err) {
 
 err_t HTTPConnection::poll() {
   send();
-  
-  return ERR_OK; 
+
+  return ERR_OK;
 }
 
 err_t HTTPConnection::sent(u16_t len) {
@@ -104,7 +104,7 @@ err_t HTTPConnection::sent(u16_t len) {
 }
 
 err_t HTTPConnection::recv(struct pbuf *q, err_t err) {
-    
+
     if(webSocket) { // JDL
         switch(request_handler->data(this, q->payload, q->len)) {
             case HTTP_SuccessEnded:
@@ -129,7 +129,7 @@ err_t HTTPConnection::recv(struct pbuf *q, err_t err) {
     recved(p->tot_len);
     data = static_cast<char *>(p->payload);
     // :1
-    // Looking if it's GET, POST, 
+    // Looking if it's GET, POST,
     // Followup from an incomplete request Header,
     // POST data or just crap (DEL, HEAD ...).
     if(!_request_type&&(strncmp(data, "GET ", 4) == 0)) {
@@ -175,6 +175,7 @@ err_t HTTPConnection::recv(struct pbuf *q, err_t err) {
       _request_url = new char[i+1];
       memcpy(_request_url, pagename, i);
       _request_url[i] = '\0';
+      _parseState = ParseStateInitial;
       getFields(&p, &data);
     }
     // :3
@@ -197,7 +198,7 @@ err_t HTTPConnection::recv(struct pbuf *q, err_t err) {
         "Server: mbed embedded\r\n"
         "Content-Length: %d\r\n"
         "Connection: close\r\n"
-        "%s\r\n", 
+        "%s\r\n",
             request_status, _request_length, getHeaderFields());
       i = strlen(buf);
       if(sndbuf()>i) {
@@ -249,123 +250,88 @@ err_t HTTPConnection::recv(struct pbuf *q, err_t err) {
   }
   return ERR_OK;
 }
-    
+
+char *HTTPConnection::trim(char* str) {
+  while(*str == ' ') str++;
+  int len = strlen(str);
+  while(len > 0 && str[len-1] == ' ') len--;
+  char *s = new char[len+1];
+  memcpy(s, str, len);
+  s[len] = '\0';
+  return s;
+}
+
 void HTTPConnection::getFields(struct pbuf **q, char **d) {
-  if(parent->fields.empty()) {
-    while((*q)&&request_incomplete) {
-      unsigned int end = ((unsigned int)((*q)->payload)+(unsigned int)((*q)->len));
-      for(; request_incomplete && ((unsigned int)(*d) < end); (*d)++) {
-        if((*((char *)((*d)-0))=='\n')&&(*((char *)((*d)-1))=='\r')&&
-           (*((char *)((*d)-2))=='\n')&&(*((char *)((*d)-3))=='\r')) {
-          request_incomplete = false;
-          (*d) += 1;
+  const int KEY_BUF_SIZE = 32;
+  const int VALUE_BUF_SIZE = 256;
+
+  while((*q) && request_incomplete) {
+    unsigned int end = ((unsigned int)((*q)->payload) + (unsigned int)((*q)->len));
+    for(; request_incomplete && ((unsigned int)(*d)<end); (*d)++) {
+      // printf("%c", **d);
+      if(_parseState == ParseStateInitial){
+
+        if(_request_arg_key == NULL)
+          _request_arg_key = new char[KEY_BUF_SIZE];
+        if(_request_arg_value == NULL)
+          _request_arg_value = new char[VALUE_BUF_SIZE];
+
+        _parse_key_ptr = _parse_value_ptr = 0;
+
+        if(**d == '\r'){
+          _parseState = ParseStateEndHdr;
+          continue; //skip '\r'
+        }
+        else
+          _parseState = ParseStateKey;
+      }
+
+      switch(_parseState) {
+      case ParseStateKey:
+        switch(**d){
+        case ':':
+        case '\r':
+          _request_arg_key[_parse_key_ptr] = '\0';
+          if(**d == ':')
+            _parseState = ParseStateValue;
+          else{
+            _request_arg_value[0] = '\0';
+            _parseState = ParseStateEOL;
+          }
+          break;
+        default:
+          if(_parse_key_ptr < KEY_BUF_SIZE-2)
+            _request_arg_key[_parse_key_ptr++] = **d;
           break;
         }
-      }
-      if(request_incomplete) {
-        (*q) = (*q)->next;
-        if((*q)) {
-          (*d) = static_cast<char *>((*q)->payload);
+        break;
+      case ParseStateValue:
+        switch(**d){
+        case '\r':
+          _request_arg_value[_parse_value_ptr] = '\0';
+          _parseState = ParseStateEOL;
+          break;
+        default:
+          if(_parse_value_ptr < VALUE_BUF_SIZE-2)
+            _request_arg_value[_parse_value_ptr++] = **d;
+          break;
         }
-      }
-    }
-  } else {
-    char *kb = *d, *ke = NULL, *vb = *d, *ve = NULL;
-    while((*q)&&request_incomplete) {
-      unsigned int end = ((unsigned int)((*q)->payload)+(unsigned int)((*q)->len));
-      for(; request_incomplete && ((unsigned int)(*d) < end); (*d)++) {
-        switch(**d) {
-          case ' ': switch(_request_arg_state) {
-            case 1: case 2: _request_arg_state = 2; break;
-            case 3:         _request_arg_state = 3; break;
-            default:        _request_arg_state = 0; break;
-          } break;
-          case ':': switch(_request_arg_state) {
-            default:        _request_arg_state = 2; break;
-            case 3:         _request_arg_state = 3; break;
-          } break;
-          case '\r': switch(_request_arg_state) {
-            default:        _request_arg_state = 4; break;
-            case 5: case 6: _request_arg_state = 6; break;
-          } break;
-          case '\n': switch(_request_arg_state) {
-            default:        _request_arg_state = 4; break;
-            case 4: case 5: _request_arg_state = 5; break;
-            case 6:         _request_arg_state = 7; break;
-          } break;
-          default: switch(_request_arg_state) {
-            default:        _request_arg_state = 1; break;
-            case 2: case 3: _request_arg_state = 3; break;
-          } break;
+        break;
+      case ParseStateEOL:
+        {
+          char *p = trim(_request_arg_value);
+          printf("(%s)=(%s)\r\n", _request_arg_key, p);
+          addField(_request_arg_key, p);
         }
-        switch(_request_arg_state) {
-          case 0: kb = (*d)+1; break; //PreKey
-          case 1: ke = (*d);   break; //Key
-          case 2: vb = (*d)+1; break; //PreValue
-          case 3: ve = (*d);   break; //Value
-          default:             break;
-          case 7: request_incomplete = false; break;
-          case 5: {
-            int oldkey = (_request_arg_key)?strlen(_request_arg_key):0;
-            int oldval = (_request_arg_value)?strlen(_request_arg_value):0;
-            int keylen =(ke&&kb)?ke-kb+1:0;
-            int vallen = (ve&&vb)?ve-vb+1:0;
-            char *key = new char[oldkey+keylen];
-            char *val = new char[oldval+vallen];
-            if(_request_arg_key&&oldkey) {
-              strncpy(key, _request_arg_key, oldkey);
-            }
-            if(_request_arg_value&&oldval) {
-              strncpy(val, _request_arg_value, oldval);
-            }
-            if(kb&&keylen) {
-              strncpy(&key[oldkey], kb, keylen);
-            }
-            if(vb&&vallen) {
-              strncpy(&val[oldval], vb, vallen);
-            }
-            key[oldkey+keylen] = 0;
-            val[oldval+vallen] = 0;
-//            printf("'%s':='%s'\n",  key, val);
-            addField(key, val);
-            kb = vb = (*d)+1;
-            ke = ve = NULL;
-            if(_request_arg_key) {
-              delete _request_arg_key;
-              _request_arg_key = NULL;
-            }
-            if(_request_arg_value) {
-              delete _request_arg_value;
-              _request_arg_value = NULL;
-            }
-            delete key;
-          } break;
-        }
+        _parseState = ParseStateInitial;
+        break;
+      case ParseStateEndHdr:
+        // _parseState = ParseStateInitial;
+        request_incomplete = false;
+        break;
       }
     }
-    switch(_request_arg_state) {
-      case 0: break; // PreKey
-      case 5: break; // n-rec
-      case 6: break; // 2r-rec
-      default: break;
-      case 1: case 2: { // Key // PreValue
-        int keylen =(kb)?(*d)-kb+1:0;
-        _request_arg_key = new char[keylen];
-        strncpy(_request_arg_key, kb, keylen+1);
-        _request_arg_key[keylen] = 0;
-      } break; 
-      case 3: case 4: { // Value // r-rec
-        int keylen =(ke&&kb)?ke-kb+1:0;
-        int vallen = (vb)?(*d)-vb+1:0;
-        _request_arg_key = new char[keylen];
-        _request_arg_value = new char[vallen];
-        strncpy(_request_arg_key, kb, keylen+1);
-        strncpy(_request_arg_value, vb, vallen+1);
-        _request_arg_key[keylen] = 0;
-        _request_arg_value[vallen] = 0;
-      } break; 
-    }
-    if(request_incomplete) {
+    if((*q)&&request_incomplete) {
       (*q) = (*q)->next;
       if((*q)) {
         (*d) = static_cast<char *>((*q)->payload);
@@ -393,21 +359,21 @@ HTTPServer::HTTPServer(const char *hostname, struct ip_addr ip, struct ip_addr n
     net->setHostname(hostname);
   }
 }
-    
+
 void HTTPConnection::deleteRequest() {
   for(map<unsigned int, char *>::iterator iter = _request_fields.begin();
     iter!=_request_fields.end();iter++) {
-    delete iter->second;
+    delete[] iter->second;
   }
   _request_fields.clear();
   if(data) {delete data; data = NULL; };
-  
+
   if(_request_type) {
-    delete _request_headerfields;
-    delete _request_arg_key;
-    delete _request_arg_value;
+    delete[] _request_headerfields;
+    delete[] _request_arg_key;
+    delete[] _request_arg_value;
     if(_request_url) {
-      delete _request_url;
+      delete[] _request_url;
       _request_url = NULL;
     }
   }

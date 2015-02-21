@@ -239,6 +239,8 @@ class HTTPConnection : public TCPConnection {
     /** Call the handler if we received new data. */
     void store(void *d, struct pbuf *p);
     
+    char *trim(char* str);
+
     /** 
      * If a request header is not complete we can colect needed header fields. 
      * This happens in here.
@@ -259,6 +261,15 @@ class HTTPConnection : public TCPConnection {
     
     bool webSocket; // JDL
 
+    enum {
+        ParseStateInitial,
+        ParseStateKey,
+        // ParseStateColon,
+        ParseStateValue,
+        ParseStateEOL,
+        ParseStateEndHdr,
+    } _parseState;
+    int _parse_key_ptr, _parse_value_ptr;
 };
 
 /* Class HTTPServer
