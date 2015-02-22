@@ -31,7 +31,8 @@ HTTPConnection::~HTTPConnection() {
 
 const char *HTTPConnection::getField(char *key) const {
   unsigned int h = hash((unsigned char *)key);
-  return _request_fields.find(h)->second;
+  return _request_fields.count(h)>0 ? 
+    _request_fields.find(h)->second : NULL;
 }
 
 void HTTPConnection::addField(char *key, char *value) {

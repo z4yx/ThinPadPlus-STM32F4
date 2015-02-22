@@ -113,6 +113,7 @@ SRCARM  =
 # use file-extension cpp for C++-files (use extension .cpp)
 CPPSRC = $(wildcard $(SRC_DIR)/src/*.cpp)
 CPPSRC += $(wildcard $(SRC_DIR)/src/crypto/*.cpp)
+CPPSRC += $(wildcard $(SRC_DIR)/src/thinpad/*.cpp)
 CPPSRC += $(wildcard $(SRC_DIR)/src/network/*.cpp)
 CPPSRC += $(wildcard $(SRC_DIR)/src/network/HTTPServer/*.cpp)
 
@@ -164,6 +165,7 @@ LINKERSCRIPTPATH = ./
 #EXTRAINCDIRS = ../.. ../../utils ../../lib_src
 EXTRAINCDIRS = $(SRC_DIR)/inc
 EXTRAINCDIRS += $(SRC_DIR)/src/crypto
+EXTRAINCDIRS += $(SRC_DIR)/src/thinpad
 EXTRAINCDIRS += $(SRC_DIR)/src/network
 EXTRAINCDIRS += $(SRC_DIR)/src/network/HTTPServer
 EXTRAINCDIRS += $(SRC_DIR)../Libraries/STM32F4xx_StdPeriph_Driver/inc 

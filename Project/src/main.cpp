@@ -39,6 +39,7 @@
 #include "HTTPWebSocketHandler.h"
 #include "HTTPFileWriting.h"
 #include "HTTPFS.h"
+#include "websock_app.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -75,10 +76,15 @@ static void PeriphInit(void)
   FileSystem_Init();
 }
 
+static WebSocketDataHandler* ObtainDataHandler(const char* url)
+{
+  return new SerialDataHandler();
+}
+
 static void ServerInit(void)
 {
   httpd.addHandler(new HTTPRestHandler("/io"));
-  httpd.addHandler(new HTTPWebSocketHandler("/ws"));
+  httpd.addHandler(new HTTPWebSocketHandler("/ws", ObtainDataHandler));
   httpd.addHandler(new HTTPFileWritingHandler("/config/", "/"));
   httpd.addHandler(new HTTPFileSystemHandler("/", "/"));
   httpd.bind();

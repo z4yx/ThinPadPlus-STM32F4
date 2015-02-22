@@ -1,16 +1,14 @@
 #include "HTTPWebSocketHandler.h"
 #include "base64.h"
-// #include "TemperatureSensor.h"
-// #include "RGBLed.h"
-
-// extern TemperatureSensor sensor;
-// extern RGBLed rgb;
 
 HTTPWebSocketConnectingState::HTTPWebSocketConnectingState() {
 }
 
 HTTPStatus HTTPWebSocketConnectingState::init(HTTPConnection *conn) {
-    strncpy(keyBuffer, conn->getField("Sec-WebSocket-Key"), sizeof(keyBuffer)-37);
+    const char *key = conn->getField("Sec-WebSocket-Key");
+    if(!key)
+        return HTTP_BadRequest;
+    strncpy(keyBuffer, key, sizeof(keyBuffer)-37);
     keyBuffer[sizeof(keyBuffer)-37] = '\0';
     strcat(keyBuffer, "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
 
@@ -83,20 +81,23 @@ HTTPHandle HTTPWebSocketStreamingState::data(HTTPConnection *conn, void *data, i
         return HTTP_Success;
 
     // printf("\r\npacket len %d\r\n", len);
+    if(readState == ReadPayload)
+        payloadStartPos = 0;
     for (int i = 0; i < len; ++i)
     {
         switch(readState){
         case ReadOpCode:
-            if(!(ptr[i] & 0x80)){
-                printf("%s\r\n", "FIN=0 is not supported yet!");
-            }
+            isFIN = (ptr[i] & 0x80)!=0;
             opcode = ptr[i] & 0x0f;
             printf("got frame with opcode=%d\r\n", opcode);
             switch(opcode){
+            case OpCodeContinuation:
+                break;
             case OpCodeText:
+                dataHandler->NewTextFrame();
+                break;
             case OpCodeBin:
-            case OpCodePing:
-            case OpCodePong:
+                dataHandler->NewBinFrame();
                 break;
             case OpCodeClose:
                 printf("%s\r\n", "Close frame received");
@@ -147,21 +148,29 @@ HTTPHandle HTTPWebSocketStreamingState::data(HTTPConnection *conn, void *data, i
                 printf("Receiving %lu bytes data with mask %x,%x,%x,%x\r\n",
                     (uint32_t)payloadLength, maskingKey[0], maskingKey[1], 
                     maskingKey[2], maskingKey[3]);
-                if(payloadLength == 0) //an empty frame
+                if(payloadLength == 0){ //an empty frame
+                    dataHandler->EndOfFrame();
                     readState = ReadOpCode; //receiving next frame
-                else
+                }else{
+                    payloadStartPos = i+1;
                     readState = ReadPayload;
+                }
             }
             break;
         case ReadPayload:
-            // printf("%c", ptr[i] ^ maskingKey[payloadRecved&3]);
+            ptr[i] ^= maskingKey[payloadRecved&3];
             payloadRecved++;
             if(payloadRecved == payloadLength){
-                // printf("\r\n");
+                dataHandler->FrameData(ptr+payloadStartPos, i+1-payloadStartPos);
+                if(isFIN)
+                    dataHandler->EndOfFrame();
                 readState = ReadOpCode;//prepare for next frame
             }
             break;
         }
+    }
+    if(readState == ReadPayload){
+        dataHandler->FrameData(ptr+payloadStartPos, len-payloadStartPos);
     }
     return HTTP_Success;
 EndConnection:
@@ -198,15 +207,26 @@ void HTTPWebSocketHandler::reg(HTTPServer *server) {
 }
 
 HTTPStatus HTTPWebSocketHandler::init(HTTPConnection *conn) const {
-    // Todo: validate headers
+    WebSocketDataHandler *dh;
     HTTPWebSocketState *state= new HTTPWebSocketConnectingState();
     HTTPStatus status= state->init(conn);
     delete state;
-    conn->data = new HTTPWebSocketStreamingState();
+
+    conn->data = NULL;
+    if(status == HTTP_SwitchProtocols){
+        dh = obtainDataHandlerFunc(conn->getURL());
+        if(dh)
+            conn->data = new HTTPWebSocketStreamingState(dh);
+        else
+            status = HTTP_Forbidden;
+    }
+
     return status;
 }
 
 HTTPHandle HTTPWebSocketHandler::data(HTTPConnection *conn, void *data, int len) const {
+    if(!conn->data)
+        return HTTP_Failed;
     HTTPWebSocketState *state= (HTTPWebSocketState *) conn->data;
     HTTPHandle result= state->data(conn, data, len);
     //printf("data: %d\n", result);
@@ -214,6 +234,8 @@ HTTPHandle HTTPWebSocketHandler::data(HTTPConnection *conn, void *data, int len)
 }
 
 HTTPHandle HTTPWebSocketHandler::send(HTTPConnection *conn, int maxData) const {
+    if(!conn->data)
+        return HTTP_Failed;
     HTTPWebSocketState *state= (HTTPWebSocketState *) conn->data;
     HTTPHandle result= state->send(conn, maxData);
     //printf("send: %d\n", result);
