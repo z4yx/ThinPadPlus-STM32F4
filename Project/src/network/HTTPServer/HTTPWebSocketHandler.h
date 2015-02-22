@@ -59,12 +59,16 @@ private:
     uint8_t opcode, readState, readLenCnt;
     bool isFIN;
     int payloadStartPos;
+    int payloadSentBytes;
+    void* pendingPayload;
+    uint64_t lengthToSend;
 public:
-    HTTPWebSocketStreamingState(WebSocketDataHandler *appHandler)
-        :readState(ReadOpCode),dataHandler(appHandler){}
+    HTTPWebSocketStreamingState(WebSocketDataHandler *appHandler);
+    ~HTTPWebSocketStreamingState();
     virtual HTTPStatus init(HTTPConnection *conn);
     virtual HTTPHandle data(HTTPConnection *conn, void *data, int len);
     virtual HTTPHandle send(HTTPConnection *conn, int maxData);
+    bool SendFrameAsyc(void* payload, uint64_t length);
     WebSocketDataHandler* dataHandler;
 };
 

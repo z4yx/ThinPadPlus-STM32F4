@@ -70,6 +70,17 @@ void HTTPWebSocketConnectingState::hexStringToBinary(const char *hex, char *bina
 
 //-----
 
+HTTPWebSocketStreamingState::HTTPWebSocketStreamingState(WebSocketDataHandler *appHandler)
+    :readState(ReadOpCode),dataHandler(appHandler){
+
+    pendingPayload = NULL;
+    dataHandler->enable(this);
+}
+HTTPWebSocketStreamingState::~HTTPWebSocketStreamingState() {
+    printf("%s destroy\r\n", __func__);
+    dataHandler->destroy();
+}
+
 HTTPStatus HTTPWebSocketStreamingState::init(HTTPConnection *conn) {
     return HTTP_InternalServerError; // ignored
 }
@@ -179,21 +190,59 @@ EndConnection:
 }
 
 HTTPHandle HTTPWebSocketStreamingState::send(HTTPConnection *conn, int maxData) {
-    // char buffer[80];
-    // int len;
-    
-    // if (sendCnt > 1000) {
-    //     sprintf(buffer, "%c%d,%d,%d\n%c", 0x00, 1, 2, 3, 0xFF);
-    //     len= strlen(buffer+1);
-    //     conn->write(buffer, len+1);
-    //     sendCnt= 0;
-    //     //led= !led;
-    // } else {
-    //     // sensor.measure();
-    //     sendCnt++;
-    // }
+
+    if(pendingPayload == NULL) //nothing to send
+        return HTTP_Success;
+
+    if(payloadSentBytes == 0){ //sending started
+        uint8_t header[10], used;
+
+        header[0] = (1<<7)|OpCodeText;
+        if(lengthToSend < 126){
+            header[1] = lengthToSend;
+            used = 2;
+        }else if(lengthToSend <= 65535){
+            header[1] = 126;
+            header[2] = lengthToSend>>8;
+            header[3] = lengthToSend&0xff;
+            used = 4;
+        }else{
+            uint64_t l = lengthToSend;
+            header[1] = 127;
+            for (int i = 9; i >= 2; --i)
+            {
+                header[i] = l&0xff;
+                l >>= 8;
+            }
+            used = 10;
+        }
+        if(used >= maxData) //maxData must be greater than used
+            return HTTP_Success;
+        conn->write(header, used);
+        maxData -= used;
+    }
+    uint64_t remain = lengthToSend - payloadSentBytes;
+    if(remain < maxData)
+        maxData  = remain;
+    conn->write(pendingPayload, maxData);
+    pendingPayload += maxData;
+    payloadSentBytes += maxData;
+
+    if(payloadSentBytes == lengthToSend){
+        pendingPayload = NULL; //finished
+        dataHandler->FrameSent();
+    }
 
     return HTTP_Success;
+}
+
+bool HTTPWebSocketStreamingState::SendFrameAsyc(void* payload, uint64_t length) {
+    if(pendingPayload != NULL)
+        return false;
+    lengthToSend = length;
+    payloadSentBytes = 0;
+    pendingPayload = payload; //start to send
+    return true;
 }
 
 //-----

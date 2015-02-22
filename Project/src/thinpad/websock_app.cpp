@@ -22,6 +22,12 @@ void SerialDataHandler::FrameData(void *payload, int len)
 {
     // DBG_MSG("len: %d", len);
     tmp_cnt+=len;
+    for (int i = 0; i < len; ++i)
+    {
+        putchar(((char*)payload)[i]);
+    }
+    if(len == 2)
+        SendFrameAsync((void*)"Good", 4);
 }
 
 void SerialDataHandler::FrameSent()
