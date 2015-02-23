@@ -92,6 +92,8 @@ void USART_Config(USART_TypeDef* USARTx, u32 USART_BaudRate)
     USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
     USART_Init(USARTx, &USART_InitStructure);
     USART_Cmd(USARTx, ENABLE);
+
+    // USART_ClearFlag(USARTx, USART_FLAG_TC);
 }
 
 /*
@@ -100,8 +102,8 @@ void USART_Config(USART_TypeDef* USARTx, u32 USART_BaudRate)
 int USART_putchar(USART_TypeDef* USARTx, int ch)
 {
 
+    while (USART_GetFlagStatus(USARTx, USART_FLAG_TXE) == RESET);
     USART_SendData(USARTx, (unsigned char) ch);
-    while (USART_GetFlagStatus(USARTx, USART_FLAG_TC) == RESET);
 
     return (ch);
 }
