@@ -36,10 +36,10 @@
 #include "filesystem.h"
 #include "HTTPServer.h"
 #include "HTTPRestHandler.h"
-#include "HTTPWebSocketHandler.h"
 #include "HTTPFileWriting.h"
 #include "HTTPFS.h"
-#include "websock_app.h"
+#include "serial_redirect.h"
+#include "tasks.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -76,15 +76,9 @@ static void PeriphInit(void)
   FileSystem_Init();
 }
 
-static WebSocketDataHandler* ObtainDataHandler(const char* url)
-{
-  return new SerialDataHandler();
-}
-
 static void ServerInit(void)
 {
   httpd.addHandler(new HTTPRestHandler("/io"));
-  httpd.addHandler(new HTTPWebSocketHandler("/ws", ObtainDataHandler));
   httpd.addHandler(new HTTPFileWritingHandler("/config/", "/"));
   httpd.addHandler(new HTTPFileSystemHandler("/", "/"));
   httpd.bind();
@@ -92,7 +86,7 @@ static void ServerInit(void)
 
 static void ThinpadInit(void)
 {
-  // SerialRedirect_Init();
+  SerialRedirect_Init(&httpd);
 }
 
 
@@ -111,7 +105,7 @@ int main(void)
      */
   CoreInit();
 
-  printf("     \r\n%s\r\n", "---- System Started ----");
+  printf("**     \r\n%s\r\n", "---- System Started ----");
 
   PeriphInit();
 
@@ -125,6 +119,7 @@ int main(void)
   while (1)
   {  
     httpd.poll();
+    SerialRedirect_Task();
   } 
 }
 

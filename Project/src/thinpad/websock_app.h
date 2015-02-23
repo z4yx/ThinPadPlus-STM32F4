@@ -4,7 +4,15 @@
 #include "WebSocketDataHandler.h"
 class SerialDataHandler : public WebSocketDataHandler
 {
-    int tmp_cnt;
+    enum MsgType
+    {
+        MsgUnknown,
+        MsgData = 'D',
+        MsgCloseSerial = 'C',
+        MsgOpenSerial = 'O',
+    };
+    uint8_t msg_type, ctl_buf[16], ctl_ptr;
+    bool firstByte;
 public:
     void NewBinFrame();
     void NewTextFrame();
