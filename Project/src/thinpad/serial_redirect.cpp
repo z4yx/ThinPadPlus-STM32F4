@@ -9,7 +9,7 @@
 
 static SerialDataHandler handler;
 static struct CircularBuffer* to_tp_buffer = NULL;
-static volatile bool tx_running;
+static volatile bool tx_running, serial_open;
 
 static WebSocketDataHandler* ObtainDataHandler(const char* url)
 {
@@ -42,18 +42,28 @@ void SerialRedirect_Init(HTTPServer* httpd)
 void SerialRedirect_Close(void)
 {
     USART_Cmd(THINPAD_SERIAL_UART, DISABLE);
+    serial_open = false;
 }
 
 void SerialRedirect_Open(int baud)
 {
+    if(baud < THINPAD_SERIAL_BAUD_MIN || baud > THINPAD_SERIAL_BAUD_MAX){
+        ERR_MSG("Incorrect baudrate");
+        return;
+    }
     USART_Config(THINPAD_SERIAL_UART, baud);
     USART_ITConfig(THINPAD_SERIAL_UART, USART_IT_TC, ENABLE);
     USART_ITConfig(THINPAD_SERIAL_UART, USART_IT_RXNE, ENABLE);
     NVIC_Config(true);
+    serial_open = true;
 }
 
 void SerialRedirect_ToThinpad(uint8_t* data, int len)
 {
+    if(!serial_open){
+        ERR_MSG("Serial is not open");
+        return;
+    }
     for (int i = 0; i < len; ++i)
     {
         if(!CircularBuffer_Push(to_tp_buffer, data[i])){
