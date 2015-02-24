@@ -4,12 +4,15 @@
 #include "websock_app.h"
 #include "usart.h"
 #include "circular_buffer.h"
+#include "double_buffer.h"
 #include "common.h"
 #include "tasks.h"
 
 static SerialDataHandler handler;
 static struct CircularBuffer* to_tp_buffer = NULL;
+static struct DoubleBuffer* from_tp_buffer = NULL;
 static volatile bool tx_running, serial_open;
+static bool network_sending;
 
 static WebSocketDataHandler* ObtainDataHandler(const char* url)
 {
@@ -36,6 +39,14 @@ void SerialRedirect_Init(HTTPServer* httpd)
         }
     }else{
         CircularBuffer_Clear(to_tp_buffer);
+    }
+    if(!from_tp_buffer){
+        from_tp_buffer = DoubleBuffer_New(THINPAD_SERIAL_T2N_BUF_SIZE);
+        if(!from_tp_buffer){
+            ERR_MSG("Cannot allocate memory for T2N buffer!");
+        }
+    }else{
+        DoubleBuffer_Clear(from_tp_buffer);
     }
 }
 
@@ -81,6 +92,27 @@ void SerialRedirect_ToThinpad(uint8_t* data, int len)
 
 void SerialRedirect_Task(void)
 {
+    if(!network_sending && DoubleBuffer_Size(from_tp_buffer) > 0){
+        uint8_t *ptr;
+        int size = DoubleBuffer_SwapBuffer(from_tp_buffer, &ptr);
+        network_sending = true;
+        fputc('y',stderr);
+        handler.SendFrameAsync((void*)ptr, size);
+    }
+}
+
+void SerialRedirect_FrameSent(void)
+{
+    if(DoubleBuffer_Size(from_tp_buffer) > 0){
+        uint8_t *ptr;
+        int size = DoubleBuffer_SwapBuffer(from_tp_buffer, &ptr);
+        network_sending = true;
+        fputc('t',stderr);
+        handler.SendFrameAsync((void*)ptr, size);
+    }else{
+        network_sending = false;
+        fputc('d',stderr);
+    }
 }
 
 void SerialRedirect_UsartInterrupt(void)
@@ -97,5 +129,6 @@ void SerialRedirect_UsartInterrupt(void)
     }
     if(USART_GetITStatus(THINPAD_SERIAL_UART, USART_IT_RXNE) != RESET){
         byte = USART_getchar(THINPAD_SERIAL_UART);
+        DoubleBuffer_Push(from_tp_buffer, byte);
     }
 }

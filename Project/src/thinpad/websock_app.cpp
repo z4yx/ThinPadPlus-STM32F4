@@ -58,5 +58,5 @@ void SerialDataHandler::FrameData(void *_payload, int len)
 
 void SerialDataHandler::FrameSent()
 {
-    DBG_MSG("sent");
+    SerialRedirect_FrameSent();
 }
