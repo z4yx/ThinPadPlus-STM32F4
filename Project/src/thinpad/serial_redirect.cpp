@@ -9,10 +9,21 @@
 
 static SerialDataHandler handler;
 static struct CircularBuffer* to_tp_buffer = NULL;
+static volatile bool tx_running;
 
 static WebSocketDataHandler* ObtainDataHandler(const char* url)
 {
   return handler.IsConnected() ? NULL : &handler; //prohibit multi-connection
+}
+
+static void NVIC_Config(bool bEnabled)
+{
+    NVIC_InitTypeDef NVIC_InitStructure;
+    NVIC_InitStructure.NVIC_IRQChannel = THINPAD_SERIAL_UART_IRQ; //指定中断源
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;   // 指定响应优先级别
+    NVIC_InitStructure.NVIC_IRQChannelCmd = (bEnabled ? ENABLE : DISABLE);
+    NVIC_Init(&NVIC_InitStructure);
 }
 
 void SerialRedirect_Init(HTTPServer* httpd)
@@ -36,6 +47,9 @@ void SerialRedirect_Close(void)
 void SerialRedirect_Open(int baud)
 {
     USART_Config(THINPAD_SERIAL_UART, baud);
+    USART_ITConfig(THINPAD_SERIAL_UART, USART_IT_TC, ENABLE);
+    USART_ITConfig(THINPAD_SERIAL_UART, USART_IT_RXNE, ENABLE);
+    NVIC_Config(true);
 }
 
 void SerialRedirect_ToThinpad(uint8_t* data, int len)
@@ -47,13 +61,31 @@ void SerialRedirect_ToThinpad(uint8_t* data, int len)
             break;
         }
     }
+    uint8_t byte;
+    if(!tx_running && CircularBuffer_Pop(to_tp_buffer, &byte)){
+        tx_running = true;
+        fputc('s',stderr);
+        USART_putchar(THINPAD_SERIAL_UART, byte);
+    }
 }
 
 void SerialRedirect_Task(void)
 {
+}
+
+void SerialRedirect_UsartInterrupt(void)
+{
     uint8_t byte;
-    while(CircularBuffer_Pop(to_tp_buffer, &byte)){
-        USART_putchar(THINPAD_SERIAL_UART, byte);
-        putchar(byte);
+    if(USART_GetITStatus(THINPAD_SERIAL_UART, USART_IT_TC) != RESET){
+        if(CircularBuffer_Pop(to_tp_buffer, &byte)) //fetch the next byte to transmit
+            USART_putchar(THINPAD_SERIAL_UART, byte);
+        else{
+            USART_ClearFlag(THINPAD_SERIAL_UART, USART_FLAG_TC);
+            fputc('e',stderr);
+            tx_running = false;
+        }
+    }
+    if(USART_GetITStatus(THINPAD_SERIAL_UART, USART_IT_RXNE) != RESET){
+        byte = USART_getchar(THINPAD_SERIAL_UART);
     }
 }

@@ -31,6 +31,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
 #include "hardware.h"
+#include "thinpad.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -137,6 +138,11 @@ void EXTI15_10_IRQHandler(void)
     /* Clear interrupt pending bit */
     EXTI_ClearITPendingBit(ETH_LINK_EXTI_LINE);
   }
+}
+
+void THINPAD_SERIAL_UART_IT_HANDLER(void)
+{
+  SerialRedirect_UsartInterrupt();
 }
 
 /******************************************************************************/
