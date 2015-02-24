@@ -24,6 +24,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifndef __cplusplus
+typedef uint8_t bool;
+enum{false=0, true=!false};
+#endif
 
 #define DBG_MSG(format, ...) printf("[Debug]%s: " format "\r\n", __func__, ##__VA_ARGS__)
 #define INFO_MSG(format, ...) printf("[Info]%s: " format "\r\n", __func__, ##__VA_ARGS__)

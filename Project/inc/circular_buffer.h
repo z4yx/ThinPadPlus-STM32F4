@@ -3,11 +3,6 @@
 
 #include <stdint.h>
 
-#ifndef __cplusplus
-typedef uint8_t bool;
-enum{false=0, true=!false};
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -1,5 +1,6 @@
-#include "circular_buffer.h"
 #include "common.h"
+#include "circular_buffer.h"
+#include <stdlib.h>
 
 struct CircularBuffer* CircularBuffer_New(int size)
 {
