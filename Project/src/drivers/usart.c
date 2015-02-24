@@ -60,6 +60,15 @@ void USART_Config(USART_TypeDef* USARTx, u32 USART_BaudRate)
             GPIO_AF  = GPIO_AF_USART3;
             RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
             break;
+        case (u32)USART6:
+            USART_GPIO = GPIOC;
+            USART_Tx = GPIO_Pin_6;
+            USART_Rx = GPIO_Pin_7;
+            PinSource_Tx = GPIO_PinSource6;
+            PinSource_Rx = GPIO_PinSource7;
+            GPIO_AF  = GPIO_AF_USART6;
+            RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART6, ENABLE);
+            break;
 
         default:
             return;
