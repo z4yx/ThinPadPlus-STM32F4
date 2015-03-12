@@ -12,12 +12,14 @@ define (require, exports, module) ->
     b = new bC()
     window.b = b
     
-    i = 1000
+    i = 10000
     state = 0;
     t = 0
     while (i > 0)
       b.addPlot((t = t + Math.floor(Math.random() * 100)), (state = !state))
       i -= 1;
     b.commit $ 'body'
+    b._showTimeStart = 0
+    b._showTimeEnd = 100
     b._refetch()
   

@@ -27,6 +27,9 @@ define (require, exports, module) ->
     @_ended = false
     @_canvas = undefined
     @_viewRect = options.viewPort ? {x: 0.1, y: 0.1, height: 0.8, width: 0.8}
+    @_ratio = 2
+    @_scale = 100
+    @strokeSize = options.strokeSize ? 1
     this
     
   util.inherits BinaryChart, EE
@@ -46,9 +49,9 @@ define (require, exports, module) ->
     @_ended = true
     self = this
     ($ @_canvas).bind 'wheel', (e)->
-      dx = e.originalEvent.deltaX
-      dy = e.originalEvent.deltaY
-      ox = e.originalEvent.offsetX
+      dx = e.originalEvent.deltaX * self._ratio
+      dy = e.originalEvent.deltaY * self._ratio
+      ox = e.originalEvent.offsetX * self._ratio
       if e.shiftKey 
         dx = dy
         dy = 0
@@ -66,8 +69,9 @@ define (require, exports, module) ->
       l = (self._showTimeEnd - self._showTimeStart)
       left = (ot - self._showTimeStart) / l
       l *= dm 
-      self._showTimeStart = ot - l * left
-      self._showTimeEnd = ot + l * (1 - left)
+      if l >= 0.01
+        self._showTimeStart = ot - l * left
+        self._showTimeEnd = ot + l * (1 - left)
       
       self._refetch()
     $(window).resize (e)->
@@ -84,14 +88,24 @@ define (require, exports, module) ->
     cxt = @_canvas.getContext '2d'
     @emit 'viewWillRefetch'
     cxt.strokeStyle = @strokeColor
+    cxt.fillStyle = @strokeColor
+    cxt.lineWidth = @strokeSize * @_ratio
+    @_drawSignal(cxt)
+    @_drawScale(cxt)
+    @emit 'viewDidRefetch'
+    
+  BinaryChart::_drawSignal = (cxt)->
     cxt.beginPath()
     nowPoint = @_findTime @_showTimeStart
     lastLevel = @_points[nowPoint]?.level
     lastLevel ?= true
     self = this
     getY = (level) ->
-      (!level * self._viewRect.height + self._viewRect.y) * self._height()
+      (!level * self._viewRect.height + self._viewRect.y) * self._height() + (!!level * self._scale)
     cxt.moveTo @_viewRect.x * @_width(), getY(lastLevel)
+    lastX = @_viewRect.x * @_width();
+    rects = [];
+    inRect = false
     while 1
       nowPoint += 1
       #console.log @_points[nowPoint]
@@ -101,20 +115,74 @@ define (require, exports, module) ->
       if @_points[nowPoint].time > @_showTimeEnd
         didFinishDraw = false
         break
-      cxt.lineTo @_timeToXPos(@_points[nowPoint].time), getY(lastLevel)
+      nowX = @_timeToXPos(@_points[nowPoint].time)
+      if nowX - lastX > 2
+        if inRect
+          inRect = false
+          rects.push lastX
+        cxt.moveTo lastX, getY(lastLevel)
+        cxt.lineTo nowX, getY(lastLevel)
+        lastLevel = @_points[nowPoint].level
+        cxt.lineTo nowX, getY(lastLevel)
+      else
+        if not inRect
+          rects.push lastX
+          inRect = true
+      lastX = nowX
       lastLevel = @_points[nowPoint].level
-      cxt.lineTo @_timeToXPos(@_points[nowPoint].time), getY(lastLevel)
-    cxt.lineTo (@_viewRect.x + @_viewRect.width) * @_width(), getY(lastLevel) if not didFinishDraw
+    if not didFinishDraw
+      cxt.moveTo lastX, getY(lastLevel)
+      cxt.lineTo (@_viewRect.x + @_viewRect.width) * @_width(), getY(lastLevel)
+      
     cxt.stroke()
-    @emit 'viewDidRefetch'
+    i = 0
+    while i < rects.length
+      rectBegin = rects[i];
+      rectEnd = rects[i + 1] ? lastX
+      cxt.fillRect rectBegin, getY(1), rectEnd - rectBegin, getY(0) - getY(1)
+      i += 2
+    rects = undefined
+  
+  BinaryChart::_drawScale = (cxt) ->
+    unit = Math.round (Math.log(100 / @_width() * (@_showTimeEnd - @_showTimeStart)) / Math.log(10))
+    interval = 10 ** unit
     
+    cxt.textAlign = 'center'
+    cxt.font = @_ratio * 14 + 'px sans-serif'
+    
+    t = @_showTimeStart // interval * interval
+    cxt.beginPath()
+    count = t // interval
+    while t <= @_showTimeEnd
+      t += interval
+      count = (count + 1) % 10
+      nextUnit = 0
+      if count == 0
+        nextUnit = 1
+      cxt.moveTo @_timeToXPos(t), @_viewRect.y * @_height() + 0.95 * @_scale
+      cxt.lineTo @_timeToXPos(t), @_viewRect.y * @_height() + (0.45 + 0.2 * !nextUnit) * @_scale 
+      if nextUnit
+        cxt.fillText beautify(t, unit + 1), @_timeToXPos(t), @_viewRect.y * @_height() + 0.3 * @_scale
+    cxt.stroke()
   
   BinaryChart::_width = () ->
-    $(@_canvas).width()
+    $(@_canvas).width() * @_ratio
     
   BinaryChart::_height = () ->
-    $(@_canvas).height()
-  
+    $(@_canvas).height() * @_ratio
+
+  beautify = (number, unit) ->
+    units = [
+      'µs', 'ms', 's', 'Ks', 'Ms' 
+    ]
+    if unit < 0
+      return number.toFixed(-unit) + units[0]
+    else if unit > 12
+      unit = 12
+    unitLevel = Math.round(unit /3)
+    leftDig = unitLevel * 3 - unit
+    leftDig = 0 if leftDig < 0
+    return (Math.round(number / (10 ** unit)) * (10 ** (unit - unitLevel * 3))).toFixed(leftDig) + units[unitLevel]
   BinaryChart
   
   
