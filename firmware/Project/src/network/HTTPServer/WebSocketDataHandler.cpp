@@ -11,8 +11,8 @@ void WebSocketDataHandler::enable(HTTPWebSocketStreamingState* _parent){
     parent=_parent;
 }
 
-bool WebSocketDataHandler::SendFrameAsync(void *payload, uint64_t payloadLength){
+bool WebSocketDataHandler::SendFrameAsync(void *payload, uint64_t payloadLength, bool text){
     if(parent)
-        return parent->SendFrameAsyc(payload, payloadLength);
+        return parent->SendFrameAsyc(payload, payloadLength, text);
     return false;
 }
