@@ -21,7 +21,7 @@ public:
     virtual void EndOfFrame() = 0;
     virtual void FrameData(void *payload, int len) = 0;
     virtual void FrameSent() = 0;
-    bool SendFrameAsync(void *payload, uint64_t payloadLength);
+    bool SendFrameAsync(void *payload, uint64_t payloadLength, bool text = true);
     bool IsConnected(){return connected;}
 };
 

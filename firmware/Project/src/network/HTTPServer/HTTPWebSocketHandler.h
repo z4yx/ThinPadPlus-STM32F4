@@ -55,6 +55,7 @@ private:
         ReadPayload,
     };
     uint64_t payloadLength, payloadRecved;
+    bool payloadIsText;
     uint8_t maskingKey[4];
     uint8_t opcode, readState, readLenCnt;
     bool isFIN;
@@ -68,7 +69,7 @@ public:
     virtual HTTPStatus init(HTTPConnection *conn);
     virtual HTTPHandle data(HTTPConnection *conn, void *data, int len);
     virtual HTTPHandle send(HTTPConnection *conn, int maxData);
-    bool SendFrameAsyc(void* payload, uint64_t length);
+    bool SendFrameAsyc(void* payload, uint64_t length, bool text);
     WebSocketDataHandler* dataHandler;
 };
 

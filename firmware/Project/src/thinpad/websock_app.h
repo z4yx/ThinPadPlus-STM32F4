@@ -10,6 +10,7 @@ class SerialDataHandler : public WebSocketDataHandler
         MsgData = 'D',
         MsgCloseSerial = 'C',
         MsgOpenSerial = 'O',
+        MsgAcquisition = 'A',
     };
     uint8_t msg_type, ctl_buf[16], ctl_ptr;
     bool firstByte;

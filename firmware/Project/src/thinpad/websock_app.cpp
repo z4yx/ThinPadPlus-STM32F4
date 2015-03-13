@@ -28,6 +28,14 @@ void SerialDataHandler::EndOfFrame()
             DBG_MSG("MsgOpenSerial baud=%d", baud);
             SerialRedirect_Open(baud);
             break;
+        case MsgAcquisition:
+            if(ctl_buf[0] == 'B')
+                SerialRedirect_Acquisition(true);
+            else if(ctl_buf[0] == 'E')
+                SerialRedirect_Acquisition(false);
+            else
+                ERR_MSG("Bad acquisition command %c", ctl_buf[0]);
+            break;
     }
 }
 
@@ -45,7 +53,7 @@ void SerialDataHandler::FrameData(void *_payload, int len)
     }
     if(msg_type == MsgData){
         SerialRedirect_ToThinpad(payload, len);
-    }else if(msg_type == MsgOpenSerial){
+    }else{
         while (len-- && ctl_ptr<sizeof(ctl_buf)-2)
         {
             ctl_buf[ctl_ptr++] = *payload;

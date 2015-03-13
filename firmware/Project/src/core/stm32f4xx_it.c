@@ -145,6 +145,11 @@ void THINPAD_SERIAL_UART_IT_HANDLER(void)
   SerialRedirect_UsartInterrupt();
 }
 
+void THINPAD_SERIAL_AC_TIMER_IT_HANDLER(void)
+{
+  SerialRedirect_AcquisitionTimerInterrupt();
+}
+
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */

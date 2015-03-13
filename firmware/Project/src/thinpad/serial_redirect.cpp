@@ -11,8 +11,41 @@
 static SerialDataHandler handler;
 static struct CircularBuffer* to_tp_buffer = NULL;
 static struct DoubleBuffer* from_tp_buffer = NULL;
+static struct DoubleBuffer* acquisition_buffer = NULL;
 static volatile bool tx_running, serial_open;
-static bool network_sending;
+static bool network_sending, pending_ac_stop;
+static uint8_t sending_type;
+
+static volatile uint32_t acquisition_cnt;
+static volatile uint8_t acquisition_level;
+
+static void acquisition_timer_config(void)
+{
+    RCC_APB1PeriphClockCmd(THINPAD_SERIAL_AC_TIMER_RCC, ENABLE);
+
+    TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+    TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
+
+    TIM_TimeBaseStructure.TIM_Period = 2-1;
+    TIM_TimeBaseStructure.TIM_Prescaler = SystemCoreClock/2/1000000/2-1;
+    // TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV2;
+    TIM_TimeBaseInit(THINPAD_SERIAL_AC_TIMER, &TIM_TimeBaseStructure);
+    TIM_Cmd(THINPAD_SERIAL_AC_TIMER, DISABLE);
+
+    TIM_ITConfig(THINPAD_SERIAL_AC_TIMER, TIM_IT_Update, ENABLE);
+}
+
+static void acquisition_timer(bool start)
+{
+    TIM_Cmd(THINPAD_SERIAL_AC_TIMER, start ? ENABLE : DISABLE);
+
+    NVIC_InitTypeDef NVIC_InitStructure;
+    NVIC_InitStructure.NVIC_IRQChannel = THINPAD_SERIAL_AC_TIMER_IRQ; //指定中断源
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = THINPAD_SERIAL_AC_PreemptionPriority;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;   // 指定响应优先级别
+    NVIC_InitStructure.NVIC_IRQChannelCmd = start ? ENABLE : DISABLE;
+    NVIC_Init(&NVIC_InitStructure);
+}
 
 static WebSocketDataHandler* ObtainDataHandler(const char* url)
 {
@@ -23,7 +56,7 @@ static void NVIC_Config(bool bEnabled)
 {
     NVIC_InitTypeDef NVIC_InitStructure;
     NVIC_InitStructure.NVIC_IRQChannel = THINPAD_SERIAL_UART_IRQ; //指定中断源
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = THINPAD_SERIAL_UART_PreemptionPriority;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;   // 指定响应优先级别
     NVIC_InitStructure.NVIC_IRQChannelCmd = (bEnabled ? ENABLE : DISABLE);
     NVIC_Init(&NVIC_InitStructure);
@@ -48,6 +81,15 @@ void SerialRedirect_Init(HTTPServer* httpd)
     }else{
         DoubleBuffer_Clear(from_tp_buffer);
     }
+    if(!acquisition_buffer){
+        acquisition_buffer = DoubleBuffer_New(THINPAD_SERIAL_AC_BUF_SIZE);
+        if(!acquisition_buffer){
+            ERR_MSG("Cannot allocate memory for acquisition buffer!");
+        }
+    }else{
+        DoubleBuffer_Clear(acquisition_buffer);
+    }
+    acquisition_timer_config();
 }
 
 void SerialRedirect_Close(void)
@@ -90,28 +132,102 @@ void SerialRedirect_ToThinpad(uint8_t* data, int len)
     }
 }
 
+void SerialRedirect_Acquisition(bool enable)
+{
+    DBG_MSG("bool %d", enable);
+    if(enable){
+        acquisition_cnt = 0;
+        acquisition_level = 1;
+        acquisition_timer(true);
+    }else{
+        acquisition_timer(false);
+        pending_ac_stop = true;
+    }
+}
+
+
 void SerialRedirect_Task(void)
 {
-    if(!network_sending && DoubleBuffer_Size(from_tp_buffer) > 0){
-        uint8_t *ptr;
-        int size = DoubleBuffer_SwapBuffer(from_tp_buffer, &ptr);
-        network_sending = true;
-        fputc('y',stderr);
-        handler.SendFrameAsync((void*)ptr, size);
+    if(!network_sending) {
+        static char tmp[16];
+
+        if(DoubleBuffer_Size(from_tp_buffer) > 0){
+            uint8_t *ptr;
+            network_sending = true;
+            fputc('y',stderr);
+            sprintf(tmp, "S%u", 1);
+            sending_type = 1;
+            handler.SendFrameAsync((void*)tmp, strlen(tmp));
+        }
+        else if(DoubleBuffer_Size(acquisition_buffer) > 0){
+            network_sending = true;
+            fputc('a',stderr);
+            sending_type = 2;
+            handler.SendFrameAsync((void*)"A", 1);
+        }
+        else if(pending_ac_stop){
+            pending_ac_stop = false;
+
+            sprintf(tmp, "E%u", acquisition_cnt);
+            
+            network_sending = true;
+            sending_type = 0;
+            handler.SendFrameAsync((void*)tmp, strlen(tmp));
+        }
     }
 }
 
 void SerialRedirect_FrameSent(void)
 {
-    if(DoubleBuffer_Size(from_tp_buffer) > 0){
-        uint8_t *ptr;
-        int size = DoubleBuffer_SwapBuffer(from_tp_buffer, &ptr);
-        network_sending = true;
-        fputc('t',stderr);
-        handler.SendFrameAsync((void*)ptr, size);
+    if(sending_type == 1){
+        if(DoubleBuffer_Size(from_tp_buffer) > 0){
+            uint8_t *ptr;
+            int size = DoubleBuffer_SwapBuffer(from_tp_buffer, &ptr);
+            network_sending = true;
+            fputc('t',stderr);
+            handler.SendFrameAsync((void*)ptr, size, false);
+        }else{
+            network_sending = false;
+            fputc('d',stderr);
+        }
+    }else if(sending_type == 2){
+        if(DoubleBuffer_Size(acquisition_buffer) > 0){
+            uint8_t *ptr;
+            int size = DoubleBuffer_SwapBuffer(acquisition_buffer, &ptr);
+            network_sending = true;
+            fputc('t',stderr);
+            handler.SendFrameAsync((void*)ptr, size, false);
+        }else{
+            network_sending = false;
+            fputc('d',stderr);
+        }
     }else{
         network_sending = false;
-        fputc('d',stderr);
+    }
+}
+
+void SerialRedirect_AcquisitionTimerInterrupt(void)
+{
+    if (TIM_GetITStatus(THINPAD_SERIAL_AC_TIMER, TIM_IT_Update) != RESET)
+    {
+        uint8_t bit = GPIO_ReadInputDataBit(THINPAD_SERIAL_AC_GPIO, THINPAD_SERIAL_AC_PIN);
+        // fputc('i',stderr);
+        if(bit ^ acquisition_level){
+            // fputc('x',stderr);
+            do{
+                uint8_t byte = acquisition_cnt & 0x7f;
+                acquisition_cnt >>= 7;
+                if(acquisition_cnt > 0)
+                    byte |= 0x80;
+                DoubleBuffer_Push(acquisition_buffer, byte);
+            }while(acquisition_cnt > 0);
+
+            acquisition_level = bit;
+            // acquisition_cnt = 0;
+        }else{
+            acquisition_cnt++;
+        }
+        TIM_ClearITPendingBit(THINPAD_SERIAL_AC_TIMER, TIM_IT_Update);
     }
 }
 

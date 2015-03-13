@@ -197,7 +197,7 @@ HTTPHandle HTTPWebSocketStreamingState::send(HTTPConnection *conn, int maxData) 
     if(payloadSentBytes == 0){ //sending started
         uint8_t header[10], used;
 
-        header[0] = (1<<7)|OpCodeText;
+        header[0] = (1<<7)|(payloadIsText ? OpCodeText : OpCodeBin);
         if(lengthToSend < 126){
             header[1] = lengthToSend;
             used = 2;
@@ -236,11 +236,12 @@ HTTPHandle HTTPWebSocketStreamingState::send(HTTPConnection *conn, int maxData) 
     return HTTP_Success;
 }
 
-bool HTTPWebSocketStreamingState::SendFrameAsyc(void* payload, uint64_t length) {
+bool HTTPWebSocketStreamingState::SendFrameAsyc(void* payload, uint64_t length, bool text) {
     if(pendingPayload != NULL)
         return false;
     lengthToSend = length;
     payloadSentBytes = 0;
+    payloadIsText = text;
     pendingPayload = payload; //start to send
     return true;
 }
