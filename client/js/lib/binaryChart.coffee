@@ -20,8 +20,8 @@ define (require, exports, module) ->
       return new BinaryChart(options)
     EE.apply this 
     
-    @_showTimeStart = 0;
-    @_showTimeEnd = 1;
+    @_showTimeStart = -1;
+    @_showTimeEnd = 80;
     @strokeColor = options.strokeColor ? "#000000"
     @_points = []
     @_ended = false
@@ -36,16 +36,22 @@ define (require, exports, module) ->
   
   BinaryChart::addPlot = (time, level) ->
     plot = new Point time, level
-    throw new Error 'not-allowed'  if @_ended
-    @_showTimeStart = plot.time if @_points.lenght == 0
-    @_showTimeEnd = plot.time
+    @_showTimeStart = plot.time - 10 if @_points.lenght == 0
+    @_showTimeEnd = plot.time + 10
     @_points.push plot
+    self = this
+    setTimeout ()->
+      self._refetch()
+    ,0
   
   BinaryChart::_findTime = (time) ->
     searchUtils.le @_points, time
   
   BinaryChart::commit = ($container) -> 
-    @_canvas = ($('<canvas />').appendTo $container )[0]
+    @_canvas = ($('<canvas />').css
+      width: '100%',
+      height: '100%',
+    .appendTo $container )[0]
     @_ended = true
     self = this
     ($ @_canvas).bind 'wheel', (e)->
@@ -76,6 +82,7 @@ define (require, exports, module) ->
       self._refetch()
     $(window).resize (e)->
       self._refetch()
+    self._refetch()
     
   BinaryChart::_timeToXPos = (time) ->
     ((time - @_showTimeStart)/(@_showTimeEnd - @_showTimeStart)*@_viewRect.width + @_viewRect.x) * @_width()
@@ -90,6 +97,7 @@ define (require, exports, module) ->
     cxt.strokeStyle = @strokeColor
     cxt.fillStyle = @strokeColor
     cxt.lineWidth = @strokeSize * @_ratio
+    cxt.strokeRect @_viewRect.x * @_width(), @_viewRect.y * @_height(), @_viewRect.width * @_width(), @_viewRect.height * @_height()
     @_drawSignal(cxt)
     @_drawScale(cxt)
     @emit 'viewDidRefetch'
@@ -153,7 +161,7 @@ define (require, exports, module) ->
     t = @_showTimeStart // interval * interval
     cxt.beginPath()
     count = t // interval
-    while t <= @_showTimeEnd
+    while t <= @_showTimeEnd - interval
       t += interval
       count = (count + 1) % 10
       nextUnit = 0

@@ -33,8 +33,6 @@ var util = require('util');
 var StringDecoder;
 var debug = util.debuglog('stream');
 
-console.log(Stream);
-
 util.inherits(Readable, Stream);
 
 function ReadableState(options, stream) {
