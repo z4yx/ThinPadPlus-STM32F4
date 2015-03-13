@@ -1,7 +1,73 @@
 <script data-main="js/main" src="js/lib/require.js"></script>
 <style>
-canvas{
-  width: 100%;
-  height: 100%;
-}
+  body, html{
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+  }
+  #main{
+    position: absolute;
+    width: 100%;
+    bottom: 50px;
+    top: 100px;
+  }
+  #tool{
+    height: 100px;
+    line-height: 100px;
+  }
+  #foot{
+    position: absolute;
+    bottom: 0px;
+    height: 50px;
+    line-height: 50px;
+  }
+  #foot a:visited{
+    color: blue;
+  }
+  .tab{
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    display: none;
+    overflow: scroll;
+  }
+  .tab.active{
+    display: block;
+  }
+  #error{
+    color: red;
+  }
 </style>
+<div id='tool'>
+  Address: <input id="address" />
+  Baud: 
+  <select id="baud">
+    <option value="9600" selected>9600</option>
+    <option value="115200">115200</option>
+    <option value="300" >300</option>
+    <option value="600" >600</option>
+    <option value="1200" >1200</option>
+    <option value="4800" >4800</option>
+    <option value="14400" >14400</option>
+    <option value="19200" >19200</option>
+    <option value="28800">28800</option>
+    <option value="38400">38400</option>
+    <option value="57600">57600</option>
+  </select>
+  <button id="connect">Connect</button>
+  <button id="start" disabled>Start - Recording</button>
+  <button id="stop" disabled>Stop - Recording</button>
+  <span id="error"></span>
+</div>
+<div id="main">
+  <div id="logic" class="tab active"></div>
+  <div id="console" class="tab"></div>
+  <div id="hex" class="tab"></div>
+</div>
+<div id="foot">
+  <a id="tabLogic" href="#" class="tabButton">Logic</a>
+  <a id="tabConsole" href="#" class="tabButton">Console</a>
+  <a id="hex" href="#" class="tabButton">Hex</a>
+</div>
