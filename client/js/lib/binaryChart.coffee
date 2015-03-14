@@ -19,20 +19,22 @@ define (require, exports, module) ->
     if not this instanceof BinaryChart
       return new BinaryChart(options)
     EE.apply this 
-    
+    @_canvas = undefined
+    @_oriOptions = options
+    @clear()
+    this
+  util.inherits BinaryChart, EE
+  
+  BinaryChart::clear = (options = @_oriOptions) ->
     @_showTimeStart = -1;
     @_showTimeEnd = 80;
     @strokeColor = options.strokeColor ? "#000000"
     @_points = []
     @_ended = false
-    @_canvas = undefined
     @_viewRect = options.viewPort ? {x: 0.1, y: 0.1, height: 0.8, width: 0.8}
     @_ratio = 2
     @_scale = 100
     @strokeSize = options.strokeSize ? 1
-    this
-    
-  util.inherits BinaryChart, EE
   
   BinaryChart::addPlot = (time, level) ->
     plot = new Point time, level

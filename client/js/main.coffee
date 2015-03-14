@@ -79,7 +79,7 @@ define (require, exports, module) ->
               # so number can be added continuously
     $('#start').click ()->
       socket.sendString('AB')
-      bC.apply logic
+      logic.clear()
       globalEvent.emit 'started'
       nowTime = 0
     $('#stop').click ()->
