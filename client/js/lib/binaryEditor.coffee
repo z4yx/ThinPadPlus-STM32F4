@@ -4,6 +4,7 @@ define (require, exports, module) ->
   #EE is EventEmitter
   EE = (require 'events').EventEmitter
   Buffer = (require 'buffer').Buffer
+  printf = require 'printf'
   
   module.exports = BinaryEditor = (options = {})->
     if not this instanceof BinaryEditor
@@ -41,12 +42,24 @@ define (require, exports, module) ->
     @_table.appendTo $to
   
   BinaryEditor::addData = (buf)->
+    needUpdate  = false;
     for data in buf
       @_hex.text(@_hex.text() + asHex(data) + ' ')
       @_ascii.text(@_ascii.text() + asAscii(data))
-      @_bytes = (@_bytes + 1) % 16
-      if @_bytes is 0
+      @_bytes = (@_bytes + 1)
+      
+      if @_bytes % 16 is 0
         @_hex.text(@_hex.text() + '\n')
         @_ascii.text(@_ascii.text() + '\n')
-  
+      if @_bytes % 16 is 1
+        needUpdate = true
+    if needUpdate
+      digs = if @_bytes is 0 
+        1
+      else
+        Math.floor(Math.log(@_bytes) / Math.log(16)) + 1
+      @_offset.text('')
+      for i in [0..@_bytes - 1] by 16
+        @_offset.text(@_offset.text() + printf("%0*X\n", i, digs))
+      
   BinaryEditor
