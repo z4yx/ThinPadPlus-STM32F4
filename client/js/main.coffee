@@ -66,11 +66,11 @@ define (require, exports, module) ->
         else if state == 1
           number = 0
           leng = 0
-          buf.forEach ()->
-            num = this & 0x7f
+          for rawnum in buf
+            num = rawnum & 0x7f
             number += num << (leng * 7) 
             leng++
-            if num & 0x80 
+            if !(rawnum & 0x80)
               leng = 0;
               lastLevel = !lastLevel
               globalEvent.emit 'logic', {time: number, level: lastLevel}
@@ -82,4 +82,4 @@ define (require, exports, module) ->
       globalEvent.emit 'started'
     $('#stop').click ()->
       socket.sendString('AE')
-      globalEvent.emit 'stopping'       
+      globalEvent.emit 'stopping'     

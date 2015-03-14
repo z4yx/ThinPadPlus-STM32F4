@@ -155,9 +155,8 @@ void SerialRedirect_Task(void)
             uint8_t *ptr;
             network_sending = true;
             fputc('y',stderr);
-            sprintf(tmp, "S%u", 1);
             sending_type = 1;
-            handler.SendFrameAsync((void*)tmp, strlen(tmp));
+            handler.SendFrameAsync((void*)"S", 1);
         }
         else if(DoubleBuffer_Size(acquisition_buffer) > 0){
             network_sending = true;
