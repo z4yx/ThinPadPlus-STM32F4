@@ -78,7 +78,7 @@ static void PeriphInit(void)
 
 static void ServerInit(void)
 {
-  httpd.addHandler(new HTTPRestHandler("/io"));
+  httpd.addHandler(new HTTPRestHandler("/rest"));
   httpd.addHandler(new HTTPFileWritingHandler("/config/", "/"));
   httpd.addHandler(new HTTPFileSystemHandler("/", "/"));
   httpd.bind();

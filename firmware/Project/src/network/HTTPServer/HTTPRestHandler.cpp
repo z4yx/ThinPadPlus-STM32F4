@@ -1,20 +1,15 @@
 #include "common.h"
 #include "HTTPRestHandler.h"
-// #include "TemperatureSensor.h"
-// #include "RGBLed.h"
-
-// extern TemperatureSensor sensor;
-// extern RGBLed rgb;
+#include "filesystem.h"
 
 #define in_range(c, lo, up)  ((u8_t)c >= lo && (u8_t)c <= up)
 #define isprint(c)           in_range(c, 0x20, 0x7f)
 
 HTTPStatus HTTPRestHandler::doGet(char *resource, HTTPConnection *conn) const {
-    printf("HTTPRestHandler GET: %s\n", resource);
+    DBG_MSG("%s", resource);
 
     HTTPRestData *d= new HTTPRestData();
     char *host;
-    char buffer[20] = "hello";
 
     // The host field string can have junk at the end...
     host= (char*) conn->getField("Host");
@@ -25,43 +20,26 @@ HTTPStatus HTTPRestHandler::doGet(char *resource, HTTPConnection *conn) const {
     }
 
     if (strcmp(resource, "/") == 0) {
-        strcat(d->response, "{\"temperature\":\"http://");
-        strcat(d->response, host);
-        strcat(d->response, conn->getURL());
-        strcat(d->response, "temperature\",\"rgbled\":\"http://");
-        strcat(d->response, host);
-        strcat(d->response, conn->getURL());
-        strcat(d->response, "rgbled\"}");
-    } else if (strcmp(resource, "/temperature") == 0) {
-        // sensor.measure();
-        // sprintf(buffer, "%f", sensor.getKelvin());
-    
-        strcat(d->response, "{\"realtime-uri\":\"ws://");
-        strcat(d->response, host);
-        strcat(d->response, "/ws/\",\"format\":\"text/csv\",\"fields\":\"ADC,resistence,temperature\",\"calibration\":\"http:/");
-        strcat(d->response, conn->getURL());
-        strcat(d->response, "/calibration\",");
-        strcat(d->response, "\"units\":\"kelvin\",\"value\":");
-        strcat(d->response, buffer);
-        strcat(d->response, "}");
-    } else if (strcmp(resource, "/temperature/calibration") == 0) {
-        strcat(d->response, "{TODO}");
-    } else if (strcmp(resource, "/rgbled") == 0) {
-        strcat(d->response, "{\"web-socket-uri\":\"ws://");
-        strcat(d->response, host);
-        strcat(d->response, "/ws/\",\"format\":\"text/csv\",\"fields\":\"red,green,blue\"}");
+        strcat(d->response, "hello word");
+    } else if (strcmp(resource, "/format") == 0) {
+        bool ok = FileSystem_MkFs();
+        strcat(d->response, ok?"OK":"Failed");
+    } else if (strstr(resource, "/mkdir?") == resource) {
+        const char* dirname = resource+7;
+        DBG_MSG("Making dir [%s]", dirname);
+        bool ok = FileSystem_MkDir(dirname);
+        strcat(d->response, ok?"OK":"Failed");
     } else return HTTP_NotFound;
 
     //conn->setHeaderFields("Content-Type: application/json");
     conn->setLength(strlen(d->response));
     conn->data= d;
 
-    //printf("json: [ %s ]\n", static_cast<HTTPRestData*>(conn->data)->response);
     return HTTP_OK;
 }
 
 HTTPStatus HTTPRestHandler::doPost(char *resource, HTTPConnection *conn) const {
-    printf("HTTPRestHandler POST: %s\n",  resource);
+    DBG_MSG("%s", resource);
     return HTTP_NotFound;
 }
 
@@ -89,9 +67,11 @@ HTTPHandle HTTPRestHandler::data(HTTPConnection *conn, void *data, int len) cons
 
 HTTPHandle HTTPRestHandler::send(HTTPConnection *conn, int maxData) const {
     HTTPRestData *d= static_cast<HTTPRestData*>(conn->data);
-    const char *str= d->response;
-    int len= strlen(str);
-    printf("REST send: %d [ %s ]\n", len, str);
-    conn->write((void*)str, len);
+    if(d){
+        const char *str= d->response;
+        int len= strlen(str);
+        DBG_MSG("REST send: %d [%s]", len, str);
+        conn->write((void*)str, len);
+    }
     return HTTP_SuccessEnded;
 }

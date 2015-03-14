@@ -15,19 +15,27 @@ void FileSystem_Init()
 
 }
 
-void FileSystem_MkFs()
+bool FileSystem_MkFs()
 {
   FRESULT res;
   DWORD cnt;
   FATFS *fsptr;
 
   DBG_MSG("Try to mkfs...");
-  res = f_mkfs("", 0, 0);
+  res = f_mkfs("", 0, 1);
   DBG_MSG("f_mkfs()=%d", res);
+  if(res != FR_OK)
+    return false;
 
   res = f_getfree("", &cnt, &fsptr);
   DBG_MSG("f_getfree()=%d cnt=%d", res, cnt);
 
+  return true;
+}
+
+bool FileSystem_MkDir(const char *dirname)
+{
+  return FR_OK == f_mkdir(dirname);
 }
 
 void FileSystem_TestFileIO()
