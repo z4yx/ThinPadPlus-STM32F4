@@ -57,11 +57,10 @@ define (require, exports, module) ->
           state = 0
         else if e[0] == 'A'
           state = 1
-          globalEvent.emit 'logic', {time: 0, level: e[1] != '0'}
-          lastLevel = e[1] != '0'
+          lastLevel = true
         else if e[0] == 'E'
           globalEvent.emit 'stop'
-          globalEvent.emit 'logic', {time: parseInt e[1..], level: lastLevel}
+          globalEvent.emit 'logic', {time: nowTime + parseInt e[1..], level: lastLevel}
       .on 'bufferMessage', (buf)->
         if state == 0 
           globalEvent.emit 'serial', buf
