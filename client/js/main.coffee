@@ -8,6 +8,7 @@ define (require, exports, module) ->
   bC = require 'cs!binaryChart'
   ws = require 'cs!websocket-connection'
   EE = require 'events'
+  bE = require 'cs!binaryEditor'
   
   globalEvent = new EE()
   
@@ -36,11 +37,15 @@ define (require, exports, module) ->
         $('#main .tab').eq(index).addClass 'active'
     logic = new bC
     logic.commit $('#logic')
+    hexEditor = new bE
+    hexEditor.commit $('#hex')
     #window.logic = logic
+    #window.hex = hexEditor
     
     globalEvent.on 'logic', (data)->
       logic.addPlot(data.time, data.level)
-    
+    .on 'serial', (data)->
+      hexEditor.addData data
     socket = {}
     nowTime = 0
     $('#connect').click ()->

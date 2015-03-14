@@ -154,7 +154,7 @@ define (require, exports, module) ->
     rects = undefined
   
   BinaryChart::_drawScale = (cxt) ->
-    unit = Math.round (Math.log(100 / @_width() * (@_showTimeEnd - @_showTimeStart)) / Math.log(10))
+    unit = Math.round (Math.log(80 / (@_width() * @_viewRect.width) * (@_showTimeEnd - @_showTimeStart)) / Math.log(10))
     interval = 10 ** unit
     
     cxt.textAlign = 'center'
@@ -171,8 +171,21 @@ define (require, exports, module) ->
         nextUnit = 1
       cxt.moveTo @_timeToXPos(t), @_viewRect.y * @_height() + 0.95 * @_scale
       cxt.lineTo @_timeToXPos(t), @_viewRect.y * @_height() + (0.45 + 0.2 * !nextUnit) * @_scale 
+      smallLableInterval = 1 + 100 // (interval / (@_showTimeEnd - @_showTimeStart) * (@_width() * @_viewRect.width))
+      if smallLableInterval > 5
+        smallLableInterval = 10
+      else if smallLableInterval > 2
+        smallLableInterval = 5
+      else if smallLableInterval > 1
+        smallLableInterval = 2
+      else if smallLableInterval == 1
+        smallLableInterval = 1
+      else 
+        smallLableInterval = 10 #impossible
       if nextUnit
         cxt.fillText beautify(t, unit + 1), @_timeToXPos(t), @_viewRect.y * @_height() + 0.3 * @_scale
+      else if count % smallLableInterval == 0
+        cxt.fillText '+' + beautify(count * interval, unit), @_timeToXPos(t), @_viewRect.y * @_height() + 0.5 * @_scale
     cxt.stroke()
   
   BinaryChart::_width = () ->
