@@ -1,6 +1,7 @@
 #ifndef SERIAL_REDIRECT_H__
 #define SERIAL_REDIRECT_H__
 
+#include "common.h"
 #include "HTTPServer.h"
 #include "thinpad.h"
 

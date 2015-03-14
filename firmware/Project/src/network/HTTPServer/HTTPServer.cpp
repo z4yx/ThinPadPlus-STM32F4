@@ -154,7 +154,7 @@ err_t HTTPConnection::recv(struct pbuf *q, err_t err) {
       if((pagename[0] == '/') && (pagename[1] == 0)) {
         pagename = "/index.htm";
       }
-      printf("emptypolls:%d pagename:%s\r\n", emptypolls, pagename);
+      INFO_MSG("Request page:%s", pagename);
 
       i = strlen(pagename);
       _request_url = new char[i+1];
@@ -169,7 +169,6 @@ err_t HTTPConnection::recv(struct pbuf *q, err_t err) {
     if(!request_incomplete) {
       emptypolls = NetServer::time();
       // Find the right handler
-      printf("request_handler=%x\n", request_handler);
       if(!request_handler) {
         request_handler = parent->handle(this);
         if(!request_handler)
@@ -253,7 +252,6 @@ void HTTPConnection::getFields(struct pbuf **q, char **d) {
   while((*q) && request_incomplete) {
     unsigned int end = ((unsigned int)((*q)->payload) + (unsigned int)((*q)->len));
     for(; request_incomplete && ((unsigned int)(*d)<end); (*d)++) {
-      // printf("%c", **d);
       if(_parseState == ParseStateInitial){
 
         if(_request_arg_key == NULL)
@@ -305,7 +303,7 @@ void HTTPConnection::getFields(struct pbuf **q, char **d) {
       case ParseStateEOL:
         {
           char *p = trim(_request_arg_value);
-          printf("(%s)=(%s)\r\n", _request_arg_key, p);
+          // printf("(%s)=(%s)\r\n", _request_arg_key, p);
           addField(_request_arg_key, p);
         }
         _parseState = ParseStateInitial;

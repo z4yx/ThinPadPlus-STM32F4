@@ -78,7 +78,6 @@ class HTTPWebSocketHandler : public HTTPHandler {
 public:
     HTTPWebSocketHandler(const char *path, ObtainDataHandlerFunc func) 
         : HTTPHandler(path),obtainDataHandlerFunc(func) {
-        printf("HTTPWebSocketHandler: %s\n", path);
     }
 
 protected:

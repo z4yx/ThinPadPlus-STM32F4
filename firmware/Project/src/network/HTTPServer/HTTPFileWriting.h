@@ -37,7 +37,7 @@ class HTTPFileWritingHandler : public HTTPHandler {
 
       snprintf(filename, FILENAMELANGTH, "%s%s\0", _dir, con->getURL() + strlen(_prefix));
       
-      printf("write file: %s %d\n", filename, data->remain);
+      DBG_MSG("Writing: %s %d\n", filename, data->remain);
       
       if(FR_OK!=f_open(&data->file, filename, FA_WRITE|FA_CREATE_ALWAYS)) {
         delete data;
@@ -58,7 +58,6 @@ class HTTPFileWritingHandler : public HTTPHandler {
      */
     virtual HTTPHandle send(HTTPConnection *con, int maximum) const {
       HTTPFileWritingHandlerData *data = static_cast<HTTPFileWritingHandlerData *>(con->data);
-      printf("REST send()\r\n");
 
       if(data->remain == 0){
         con->write((void*)"OK", 2);
@@ -70,7 +69,7 @@ class HTTPFileWritingHandler : public HTTPHandler {
 
     HTTPHandle data(HTTPConnection *con, void *buf, int len) const {
       HTTPFileWritingHandlerData *data = static_cast<HTTPFileWritingHandlerData *>(con->data);
-      printf("REST data(%d)\r\n", len);
+      // printf("REST data(%d)\r\n", len);
       // if(len == 0){
       //   data->finishedWriting = true;
       //   return HTTP_Success;
@@ -78,7 +77,7 @@ class HTTPFileWritingHandler : public HTTPHandler {
       data->remain -= len;
       unsigned int written;
       if(FR_OK!=f_write(&data->file, buf, len, &written)){
-        printf("%s\n", "writing error");
+        ERR_MSG("Writing error");
       }
       return HTTP_Success;
     }

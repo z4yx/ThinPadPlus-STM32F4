@@ -1,5 +1,5 @@
+#include "common.h"
 #include "HTTPRestHandler.h"
-#include "stdio.h"
 // #include "TemperatureSensor.h"
 // #include "RGBLed.h"
 

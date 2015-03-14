@@ -21,7 +21,6 @@ public:
 class HTTPRestHandler : public HTTPHandler {
 public:
     HTTPRestHandler(const char *path) : HTTPHandler(path) {
-        printf("HTTPRestHandler: %s\n", path);
         prefixLength= strlen(path);
     }
     

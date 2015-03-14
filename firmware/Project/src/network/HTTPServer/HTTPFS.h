@@ -4,6 +4,7 @@
 
 #include "HTTPServer.h"
 #include "ff.h"
+#include "common.h"
 
 #define HTTP_BUFFER_SIZE 700
 #define FILENAMELANGTH 100
@@ -51,20 +52,21 @@ class HTTPFileSystemHandler : public HTTPHandler {
      */
     virtual HTTPStatus init(HTTPConnection *con) const {
       char filename[FILENAMELANGTH];
+      FRESULT res;
       HTTPFileSystemData *data = new HTTPFileSystemData();
-      printf("FS: %s\n", con->getURL());
       snprintf(filename, FILENAMELANGTH, "%s%s\0", _dir, con->getURL() + strlen(_prefix));
       
-      printf("filename: %s\n", filename);
+      DBG_MSG("Request: %s", filename);
       
-      if(FR_OK!=f_open(&data->file, filename, FA_READ|FA_OPEN_EXISTING)) {
+      if(FR_OK!=(res=f_open(&data->file, filename, FA_READ|FA_OPEN_EXISTING))) {
         delete data;
+        ERR_MSG("Failed to open file, error=%u", res);
         return HTTP_NotFound;
       }
       data->fleft  = fleft(&data->file);
       data->bleft  = 0;
       data->offset = 0;
-      printf("file opend size=%u\r\n", data->fleft);
+      DBG_MSG("Filesize=%u", data->fleft);
       
       con->data = data;
       con->setLength(data->fleft);
@@ -122,7 +124,7 @@ class HTTPFileSystemHandler : public HTTPHandler {
         if(data->fleft) {
           unsigned int len;
           FRESULT fr = f_read(&data->file, &data->buffer[0], HTTP_BUFFER_SIZE, &len);
-          printf("%u bytes read, fr=%d\r\n", len, fr);
+          DBG_MSG("%u bytes read, fr=%d", len, fr);
           data->fleft -= len;
           data->bleft  = len;
           data->offset = 0;

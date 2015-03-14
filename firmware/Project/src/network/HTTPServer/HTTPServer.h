@@ -5,6 +5,7 @@
 #include "TCPListener.h"
 #include "NetServer.h"
 
+#include "common.h"
 
 #include <cstring>
 #include <map>
@@ -375,7 +376,6 @@ class HTTPServer : public TCPListener {
      * Pick up the right handler to deliver the response.
      */
     virtual HTTPHandler *handle(HTTPConnection *con) const {
-        printf("%s\r\n", "handle request");
       for(list<HTTPHandler *>::const_iterator iter = _handler.begin(); iter != _handler.end(); iter++) {      
         if(strncmp((*iter)->getPrefix(), con->getURL(), strlen((*iter)->getPrefix()))==0) {
           HTTPHandler *handler = *iter;
@@ -384,7 +384,7 @@ class HTTPServer : public TCPListener {
           }
         }
       }
-      printf("No handler found\r\n");
+      ERR_MSG("No HTTP handler found");
       return NULL;
     }
 
@@ -394,10 +394,9 @@ class HTTPServer : public TCPListener {
     virtual err_t accept(struct tcp_pcb *pcb, err_t err) {
       LWIP_UNUSED_ARG(err);
       HTTPConnection *con = new HTTPConnection(this, pcb);
-      printf("%s\r\n", "New Connection opend");
-     // printf("New Connection opend. Now are %u connections open\n", ++gconnections);
+      DBG_MSG("New HTTP connection");
       if(con == NULL) {
-        printf("http_accept: Out of memory\n");
+        ERR_MSG("http_accept: Out of memory");
         return ERR_MEM;
       }
       con->set_poll_interval(1);

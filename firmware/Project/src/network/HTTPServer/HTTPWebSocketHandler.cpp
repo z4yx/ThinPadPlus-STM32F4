@@ -51,7 +51,6 @@ HTTPStatus HTTPWebSocketConnectingState::init(HTTPConnection *conn) {
     conn->setLength(0);
     conn->setHeaderFields(headers);
     
-    printf("\n%s\n", headers);
     
     return HTTP_SwitchProtocols;
 }
@@ -77,7 +76,7 @@ HTTPWebSocketStreamingState::HTTPWebSocketStreamingState(WebSocketDataHandler *a
     dataHandler->enable(this);
 }
 HTTPWebSocketStreamingState::~HTTPWebSocketStreamingState() {
-    printf("%s destroy\r\n", __func__);
+    DBG_MSG("Destroyed");
     dataHandler->destroy();
 }
 
@@ -100,7 +99,7 @@ HTTPHandle HTTPWebSocketStreamingState::data(HTTPConnection *conn, void *data, i
         case ReadOpCode:
             isFIN = (ptr[i] & 0x80)!=0;
             opcode = ptr[i] & 0x0f;
-            printf("got frame with opcode=%d\r\n", opcode);
+            DBG_MSG("got frame with opcode=%d", opcode);
             switch(opcode){
             case OpCodeContinuation:
                 break;
@@ -111,17 +110,17 @@ HTTPHandle HTTPWebSocketStreamingState::data(HTTPConnection *conn, void *data, i
                 dataHandler->NewBinFrame();
                 break;
             case OpCodeClose:
-                printf("%s\r\n", "Close frame received");
+                INFO_MSG("Close frame received");
                 goto EndConnection;
             default:
-                printf("Unknown opcode %d\n", opcode);
+                ERR_MSG("Unknown opcode %d", opcode);
                 goto EndConnection;
             }
             readState = ReadLen8;
             break;
         case ReadLen8:
             if(!(ptr[i] & 0x80)){
-                printf("%s\r\n", "Not masked");
+                ERR_MSG("Not masked");
                 goto EndConnection;
             }
             payloadLength = ptr[i] & 0x7f;
@@ -156,9 +155,9 @@ HTTPHandle HTTPWebSocketStreamingState::data(HTTPConnection *conn, void *data, i
             maskingKey[readLenCnt++] = ptr[i];
             if(readLenCnt == 4){
                 payloadRecved = 0;
-                printf("Receiving %lu bytes data with mask %x,%x,%x,%x\r\n",
-                    (uint32_t)payloadLength, maskingKey[0], maskingKey[1], 
-                    maskingKey[2], maskingKey[3]);
+                // printf("Receiving %lu bytes data with mask %x,%x,%x,%x\r\n",
+                //     (uint32_t)payloadLength, maskingKey[0], maskingKey[1], 
+                //     maskingKey[2], maskingKey[3]);
                 if(payloadLength == 0){ //an empty frame
                     dataHandler->EndOfFrame();
                     readState = ReadOpCode; //receiving next frame
@@ -185,7 +184,7 @@ HTTPHandle HTTPWebSocketStreamingState::data(HTTPConnection *conn, void *data, i
     }
     return HTTP_Success;
 EndConnection:
-    printf("%s\r\n", "Closing connection");
+    INFO_MSG("Closing connection");
     return HTTP_SuccessEnded;
 }
 
@@ -279,7 +278,6 @@ HTTPHandle HTTPWebSocketHandler::data(HTTPConnection *conn, void *data, int len)
         return HTTP_Failed;
     HTTPWebSocketState *state= (HTTPWebSocketState *) conn->data;
     HTTPHandle result= state->data(conn, data, len);
-    //printf("data: %d\n", result);
     return result;
 }
 
@@ -288,7 +286,6 @@ HTTPHandle HTTPWebSocketHandler::send(HTTPConnection *conn, int maxData) const {
         return HTTP_Failed;
     HTTPWebSocketState *state= (HTTPWebSocketState *) conn->data;
     HTTPHandle result= state->send(conn, maxData);
-    //printf("send: %d\n", result);
     return result;
 }
 

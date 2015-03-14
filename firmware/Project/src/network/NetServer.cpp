@@ -21,6 +21,7 @@
 #include "stm32f4x7_eth.h"
 #include "stm32f4x7_eth_bsp.h"
 #include "netconf.h"
+#include "common.h"
 
 using namespace std;
 using namespace mbed;
@@ -79,7 +80,6 @@ void NetServer::init() {
   } else {
     dhcp_start(netif);
   }
-  printf("%s\r\n", "init() done");
 
   // tickARP.attach_us( &etharp_tmr,  ARP_TMR_INTERVAL  * 1000); 
   // //eth_tick.attach_us<NetServer>(this,&emac_tmr, TCP_FAST_INTERVAL * 1000);
@@ -103,14 +103,13 @@ int NetServer::isUp() const {
 }
 
 void NetServer::waitUntilReady() {
-  printf("%s:%s\r\n", __func__, "in");
+  DBG_MSG("Waiting for netif...");
   while(!netif_is_up(netif)) {
     _poll();
     Delay_ms(1);
   }
-  printf("%s:%s\r\n", __func__, "netif_is_up");
   ipaddr = netif->ip_addr;
-  printf("IP: %u.%u.%u.%u\n", (ipaddr.addr)&0xFF, (ipaddr.addr>>8)&0xFF, (ipaddr.addr>>16)&0xFF, (ipaddr.addr>>24)&0xFF);
+  INFO_MSG("IP: %u.%u.%u.%u", (ipaddr.addr)&0xFF, (ipaddr.addr>>8)&0xFF, (ipaddr.addr>>16)&0xFF, (ipaddr.addr>>24)&0xFF);
 }
 
 TCPCallbackListener *NetServer::bindTCPPort(u16_t port, err_t (*accept)(TCPCallbackListener *, struct tcp_pcb *, err_t)) const {
