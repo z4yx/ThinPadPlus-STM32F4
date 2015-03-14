@@ -31,16 +31,18 @@ class HTTPFileWritingHandler : public HTTPHandler {
     }
 
     virtual HTTPStatus init(HTTPConnection *con) const {
+      FRESULT res;
       char filename[FILENAMELANGTH];
       HTTPFileWritingHandlerData *data = new HTTPFileWritingHandlerData();
       data->remain = atoi(con->getField("Content-Length"));
 
       snprintf(filename, FILENAMELANGTH, "%s%s\0", _dir, con->getURL() + strlen(_prefix));
       
-      DBG_MSG("Writing: %s %d\n", filename, data->remain);
+      DBG_MSG("Writing [%s] size=%d", filename, data->remain);
       
-      if(FR_OK!=f_open(&data->file, filename, FA_WRITE|FA_CREATE_ALWAYS)) {
+      if(FR_OK!=(res=f_open(&data->file, filename, FA_WRITE|FA_CREATE_ALWAYS))) {
         delete data;
+        ERR_MSG("Failed to open file, error=%u", res);
         return HTTP_NotFound;
       }
       
@@ -79,6 +81,8 @@ class HTTPFileWritingHandler : public HTTPHandler {
       if(FR_OK!=f_write(&data->file, buf, len, &written)){
         ERR_MSG("Writing error");
       }
+      if(written != len)
+        ERR_MSG("len=%d, %u bytes written", len, written);
       return HTTP_Success;
     }
 

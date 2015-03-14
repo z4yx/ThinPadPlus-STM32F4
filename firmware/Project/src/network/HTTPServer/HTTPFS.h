@@ -67,9 +67,13 @@ class HTTPFileSystemHandler : public HTTPHandler {
       data->bleft  = 0;
       data->offset = 0;
       DBG_MSG("Filesize=%u", data->fleft);
+
+      char* headers = new char[64];
+      strcpy(headers, "Cache-Control: max-age=160000\r\n");
       
       con->data = data;
       con->setLength(data->fleft);
+      con->setHeaderFields(headers);
       loadFromFile(con);
       return HTTP_OK;
     }
@@ -124,7 +128,7 @@ class HTTPFileSystemHandler : public HTTPHandler {
         if(data->fleft) {
           unsigned int len;
           FRESULT fr = f_read(&data->file, &data->buffer[0], HTTP_BUFFER_SIZE, &len);
-          DBG_MSG("%u bytes read, fr=%d", len, fr);
+          // DBG_MSG("%u bytes read, fr=%d", len, fr);
           data->fleft -= len;
           data->bleft  = len;
           data->offset = 0;
