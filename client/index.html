@@ -42,6 +42,9 @@
 </style>
 <div id='tool'>
   Address: <input id="address" />
+  <script>
+  document.getElementById('address').value=('ws://'+location.host+'/thinpad/serial');
+  </script>
   Baud: 
   <select id="baud">
     <option value="9600" selected>9600</option>
