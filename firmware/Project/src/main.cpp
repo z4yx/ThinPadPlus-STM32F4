@@ -47,19 +47,22 @@
 /* Private macro -------------------------------------------------------------*/
 #define IPv4(a,b,c,d) (((d)<<24)|((c)<<16)|((b)<<8)|(a))
 /* Private variables ---------------------------------------------------------*/
-
+static ip_addr IP = {.addr = IPv4(192,168,1,42)};
+static ip_addr Mask = {.addr = IPv4(255,255,255,0)};
+static ip_addr GW = {.addr = IPv4(192,168,1,1)};
+static ip_addr DNS = {.addr = IPv4(8,8,8,8)};
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
 
-HTTPServer httpd /*(
-    "mBed",                 // hostname
-    IPv4(192,168,1,42),    // IP address
-    IPv4(255,255,255,0),    // Netmask
-    IPv4(192,168,1,1),     // Gateway
-    IPv4(192,168,1,1),     // DNS
-    80                      // Port
-)*/;
+HTTPServer httpd (
+    "mBed",   // hostname
+    IP,    // IP address
+    Mask,    // Netmask
+    GW,     // Gateway
+    DNS,     // DNS
+    80       // Port
+);
 
 static void CoreInit(void)
 {
