@@ -1,0 +1,5 @@
+set -tmpdir "Z:/Projects/ThinPadPlus/test/vga_generator/VGA/xst/projnav.tmp"
+set -xsthdpdir "Z:/Projects/ThinPadPlus/test/vga_generator/VGA/xst"
+elaborate
+-ifn dcm.prj
+-ifmt mixed

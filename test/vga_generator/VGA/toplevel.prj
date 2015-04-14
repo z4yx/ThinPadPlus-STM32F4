@@ -1,0 +1,3 @@
+verilog work "vga.v"
+verilog work "image.v"
+verilog work "toplevel.v"

@@ -1,0 +1,18 @@
+
+
+NET "pixel_b_out[2]" LOC = B6;
+NET "pixel_b_out[1]" LOC = A6;
+NET "pixel_b_out[0]" LOC = D5;
+NET "pixel_g_out[2]" LOC = C5;
+NET "pixel_g_out[1]" LOC = C4;
+NET "pixel_g_out[0]" LOC = B4;
+NET "pixel_r_out[2]" LOC = A4;
+NET "pixel_r_out[1]" LOC = C3;
+NET "pixel_r_out[0]" LOC = A7;
+NET "hsync" LOC = D6;
+NET "vsync" LOC = E6;
+NET "rst" LOC = U10;
+
+# PlanAhead Generated physical constraints 
+
+NET "gclk" LOC = B9;
